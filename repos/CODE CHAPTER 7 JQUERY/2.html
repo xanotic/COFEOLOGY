@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Convert RM to USD and vice versa</title>
+</head>
+<body>
+
+<h1>Converts RM to USD and otherwise (USD1 = MYR4)</h1>
+
+<!-- Dua input untuk RM dan USD -->
+<input type="text" id="rm" placeholder="RM"> = 
+<input type="text" id="usd" placeholder="USD"><br><br>
+
+<!-- Butang yang panggil fungsi convert() -->
+<input type="submit" onclick="convert()">
+<!-- Butang reset yang panggil fungsi reset() -->
+<input type="reset" onclick="reset()">
+
+<script>
+  // Fungsi reset - untuk kosongkan kedua-dua input
+  function reset() {
+    document.getElementById('rm').value = "";
+    document.getElementById('usd').value = "";
+  }
+
+  // Fungsi convert - kira nilai RM atau USD berdasarkan input
+  function convert() {
+    var rm = parseInt(document.getElementById('rm').value);
+    var usd = parseInt(document.getElementById('usd').value);
+
+    // Jika RM tiada, kira RM dari USD
+    if (isNaN(rm)) {
+      document.getElementById('rm').value = "RM " + (usd * 4);
+    }
+
+    // Jika USD tiada, kira USD dari RM
+    if (isNaN(usd)) {
+      document.getElementById('usd').value = "USD " + (rm / 4);
+    }
+  }
+</script>
+
+</body>
+</html>

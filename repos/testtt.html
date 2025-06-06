@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Veronica Design System</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 text-gray-800 p-6">
+
+  <!-- Contractor Form -->
+  <div class="max-w-2xl mx-auto bg-white p-6 rounded-2xl shadow-md mb-10">
+    <h2 class="text-2xl font-bold mb-4">Add New Contractor</h2>
+    <form class="space-y-4">
+      <div>
+        <label class="block font-semibold mb-1">Contractor Name</label>
+        <input type="text" class="w-full p-2 border rounded" placeholder="Enter name"/>
+      </div>
+
+      <div>
+        <label class="block font-semibold mb-1">Specialization</label>
+        <input type="text" class="w-full p-2 border rounded" placeholder="e.g., Furniture, Lighting"/>
+      </div>
+
+      <div>
+        <label class="block font-semibold mb-1">Contact Number</label>
+        <input type="tel" class="w-full p-2 border rounded" placeholder="Phone number"/>
+      </div>
+
+      <div>
+        <label class="block font-semibold mb-1">Email Address</label>
+        <input type="email" class="w-full p-2 border rounded" placeholder="email@example.com"/>
+      </div>
+
+      <div>
+        <label class="block font-semibold mb-1">Availability Status</label>
+        <select class="w-full p-2 border rounded">
+          <option>Available</option>
+          <option>Unavailable</option>
+        </select>
+      </div>
+
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Submit</button>
+    </form>
+  </div>
+
+  <!-- Admin Summary Dashboard -->
+  <div class="max-w-3xl mx-auto bg-white p-6 rounded-2xl shadow-md">
+    <h2 class="text-2xl font-bold mb-4">Monthly Consultation Summary</h2>
+
+    <ul class="mb-6 space-y-2">
+      <li><strong>Total Consultations:</strong> 85</li>
+      <li><strong>Verified:</strong> 68</li>
+      <li><strong>Pending:</strong> 17</li>
+      <li><strong>Most Selected Design:</strong> Modern Minimalist Living Room</li>
+    </ul>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <canvas id="consultationChart"></canvas>
+    </div>
+
+    <button class="mt-6 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+      Download PDF
+    </button>
+  </div>
+
+  <!-- Chart.js script -->
+  <script>
+    const ctx = document.getElementById('consultationChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: ['Verified', 'Pending'],
+        datasets: [{
+          label: 'Consultations',
+          data: [68, 17],
+          backgroundColor: ['#10B981', '#F59E0B'],
+        }]
+      },
+      options: {
+        responsive: true,
+      }
+    });
+  </script>
+
+</body>
+</html>

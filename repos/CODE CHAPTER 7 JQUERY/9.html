@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>jQuery Events</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+</head>
+<body>
+
+  <p>Klik saya atau hover ke atas saya!</p>
+  <input type="text" placeholder="Taip sesuatu di sini">
+
+  <script>
+    $(document).ready(function(){
+
+      // Bila user klik pada <p>
+      $("p").click(function(){
+        alert("Anda klik pada perenggan!");
+      });
+
+      // Bila user klik dua kali pada <p>
+      $("p").dblclick(function(){
+        alert("Double click dikesan!");
+      });
+
+      // Bila input mendapat fokus (user klik dalam input)
+      $("input").focus(function(){
+        $(this).css("background-color", "#eef");
+      });
+
+      // Contoh guna .on() untuk pelbagai event pada <p>
+      $("p").on({
+        mouseenter: function(){
+          // Bila mouse masuk ke atas <p>
+          $(this).css("background-color", "lightgray");
+        },
+        mouseleave: function(){
+          // Bila mouse keluar dari <p>
+          $(this).css("background-color", "lightblue");
+        },
+        click: function(){
+          // Bila <p> diklik
+          $(this).css("background-color", "yellow");
+        }
+      });
+
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script>
+    $(document).ready(function(){
+      $("button").click(function(){
+        // Animasi: apabila butang diklik, elemen <div> akan toggle ketinggian
+        $("div").animate({
+          height: 'toggle' // Tukar antara "show" dan "hide" ketinggian elemen
+        });
+      });
+    });
+  </script>
+</head>
+<body>
+
+  <!-- Butang yang akan menjalankan animasi -->
+  <button>Start Animation</button>
+
+  <!-- Kotak yang akan dianimasikan -->
+  <div style="background:#98bf21;height:100px;width:100px;position:absolute;"></div>
+
+</body>
+</html>

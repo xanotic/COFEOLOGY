@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Convert RM to USD and vice versa</title>
+
+  <!-- Masukkan pustaka jQuery daripada CDN -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+
+<h1>Converts RM to USD and otherwise (USD1 = MYR4)</h1>
+
+<!-- Dua input: satu untuk RM, satu untuk USD -->
+<input type="text" id="rm" placeholder="RM"> = 
+<input type="text" id="usd" placeholder="USD"><br><br>
+
+<!-- Dua butang: submit untuk convert, reset untuk kosongkan -->
+<input type="submit" id="s">
+<input type="reset" id="r">
+
+<script>
+  // Fungsi hanya bermula selepas dokumen siap dimuat
+  $(document).ready(function(){
+
+    // ⬇️ jQuery GANTI document.getElementById(...) = ""
+    // Butang reset: bila diklik, kosongkan input RM dan USD
+    $("#r").click(function(){
+      $("#rm").val("");   // jQuery .val("") = JavaScript .value = ""
+      $("#usd").val("");
+    });
+
+    // ⬇️ jQuery GANTI onclick="convert()" dari HTML
+    // Butang convert: bila diklik, kira RM ↔ USD
+    $("#s").click(function(){
+
+      // ⬇️ jQuery .val() GANTI .value dalam JavaScript
+      var rm = parseFloat($("#rm").val());
+      var usd = parseFloat($("#usd").val());
+
+      // ⬇️ Sama macam JS: cek jika RM adalah nombor
+      if (!isNaN(rm)) {
+        // Guna .val(...) untuk set nilai input (ganti .value)
+        $("#usd").val((rm / 4).toFixed(2)); // Tetapkan USD hasil daripada RM
+      }
+
+      // ⬇️ Jika RM kosong tapi USD diisi, tukar ke RM
+      else if (!isNaN(usd)) {
+        $("#rm").val((usd * 4).toFixed(2));
+      }
+
+      // ⬇️ Jika dua-dua kosong atau bukan nombor
+      else {
+        alert("Sila isi salah satu nilai dahulu.");
+      }
+    });
+
+  });
+</script>
+
+</body>
+</html>
