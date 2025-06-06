@@ -1,2 +1,0 @@
-
-    cout << "Enter another number: ";
