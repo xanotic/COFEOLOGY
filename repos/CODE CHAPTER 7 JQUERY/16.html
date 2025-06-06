@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script>
+    $(document).ready(function(){
+      $("button").click(function(){
+        var div = $("div");  // Pilih elemen div
+
+        // Menambah animasi ke dalam queue, dijalankan satu per satu
+        div.animate({height: '300px', opacity: '0.4'}, "slow"); // Ketinggian 300px, opasiti 0.4
+        div.animate({width: '300px', opacity: '0.8'}, "slow");  // Lebar 300px, opasiti 0.8
+        div.animate({height: '100px', opacity: '0.4'}, "slow"); // Ketinggian 100px, opasiti 0.4
+        div.animate({width: '100px', opacity: '0.8'}, "slow");  // Lebar 100px, opasiti 0.8
+      });
+    });
+  </script>
+</head>
+<body>
+
+  <button>Start Animation</button>
+  
+  <div style="background:#98bf21;height:100px;width:100px;position:absolute;"></div>
+
+</body>
+</html>

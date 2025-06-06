@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>jQuery Events</title>
+
+  <!-- Masukkan pustaka jQuery dari fail tempatan -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+
+  <!-- Butang dengan ID "clickme" -->
+  <button id="clickme">Click Me</button>
+
+  <!-- Perenggan dengan ID "result" -->
+  <p id="result">I am a paragraph</p>
+
+  <script>
+    // Bila dokumen dah siap dimuat
+    $('#clickme').click(function() {
+      
+      // Bila butang diklik, tukar kandungan perenggan (ID "result")
+      $('#result').html("You clicked the button!");
+      
+    });
+  </script>
+
+</body>
+</html>
