@@ -1,1 +1,1 @@
-# cofeology web system
+# COFEOLOGY FOOD ORDERING SYSTEM MANAGEMENT
