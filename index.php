@@ -62,7 +62,7 @@ if(file_exists('includes/functions.php')) {
             color: #ff6b6b;
         }
         .btn-secondary {
-            background-color: transparent;
+            background-color:rgb(185, 78, 78);
             color: white;
             border: 2px solid white;
         }
