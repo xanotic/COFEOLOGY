@@ -121,7 +121,7 @@ try {
     // Insert sample menu items
     $menu_items = [
         [1, 'Grilled Chicken', 'Tender grilled chicken with herbs', 12.99, 'grilled_chicken.jpg'],
-        [1, 'Beef Steak', 'Premium cut beef steak', 18.99, 'beef_steak.jpg'],
+        [1, 'Beef Steaks', 'Premium cut beef steak', 18.99, 'beef_steak.jpg'],
         [1, 'Vegetable Pasta', 'Fresh pasta with seasonal vegetables', 10.99, 'veg_pasta.jpg'],
         [2, 'Garlic Bread', 'Crispy bread with garlic butter', 4.99, 'garlic_bread.jpg'],
         [2, 'Chicken Wings', 'Spicy chicken wings', 8.99, 'chicken_wings.jpg'],
