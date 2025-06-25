@@ -3,7 +3,7 @@
         <div class="header-content">
             <div class="logo">
                 <a href="index.php">
-                    <h1>Café Delights</h1>
+                    <h1>Café Dels</h1>
                 </a>
             </div>
             <nav class="main-nav">
@@ -29,7 +29,6 @@
                             <span><?php echo $_SESSION['user_name']; ?></span>
                         </button>
                         <div class="user-dropdown">
-                            <a href="profile.php">My Profile</a>
                             <a href="logout.php">Logout</a>
                         </div>
                     </div>
