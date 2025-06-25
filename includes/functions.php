@@ -106,6 +106,10 @@ function loginUser($conn, $email, $password) {
             if (password_verify($password, $user['password'])) {
                 // Password is correct, start a new session
                 
+                // Start session if not already started
+                if (session_status() == PHP_SESSION_NONE) {
+                    session_start();
+                }
                 // Store data in session variables
                 $_SESSION["user_id"] = $user['id'];
                 $_SESSION["user_name"] = $user['name'];
@@ -117,6 +121,10 @@ function loginUser($conn, $email, $password) {
             }
         }
         $stmt->close();
+        
+    } else {
+        // Log error if statement fails to prepare
+        error_log("Login query failed: " . $conn->error);
     }
     
     return false;
