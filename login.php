@@ -115,11 +115,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <label class="form-label">Login As</label>
                             <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 10px;">
                                 <label class="user-type-method">
-                                    <input type="radio" id="user_type_auto" name="user_type" value="" class="form-check-input" <?php if(!isset($_POST['user_type']) || $_POST['user_type'] === '') echo 'checked'; ?>>
-                                    <div class="user-type-method-icon"><i class="fas fa-magic"></i></div>
-                                    <span>Auto Detect</span>
-                                </label>
-                                <label class="user-type-method">
                                     <input type="radio" id="user_type_customer" name="user_type" value="customer" class="form-check-input" <?php if(isset($_POST['user_type']) && $_POST['user_type'] === 'customer') echo 'checked'; ?>>
                                     <div class="user-type-method-icon"><i class="fas fa-user"></i></div>
                                     <span>Customer</span>
