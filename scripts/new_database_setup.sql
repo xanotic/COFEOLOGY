@@ -235,12 +235,12 @@ UPDATE MENU_ITEM SET STOCK_LEVEL = STOCK_LEVEL + 5 WHERE STOCK_LEVEL < 10;
 
 -- Insert sample order listings
 INSERT INTO ORDER_LISTING (ORDER_QUANTITY, ORDER_ID, ITEM_ID, item_price) VALUES
-(1, 1, 1, 5.50),
-(1, 1, 6, 3.90),
-(1, 1, 3, 4.50),
-(1, 2, 10, 16.90),
-(1, 3, 8, 24.90),
-(1, 3, 14, 6.90);
+(1, 1, 657, 23.10),  
+(1, 1, 658, 23.10),  
+(1, 1, 659, 19.60),  
+(1, 2, 660, 14.00),  
+(1, 3, 661, 19.60),  
+(1, 3, 662, 18.90);  
 
 -- Create indexes for better performance
 CREATE INDEX idx_order_cust_id ON `ORDER`(CUST_ID);
