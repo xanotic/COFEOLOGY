@@ -17,8 +17,8 @@ if (!isset($_GET['order_id'])) {
 
 $order_id = intval($_GET['order_id']);
 
-// Get order details
-$stmt = $conn->prepare("SELECT * FROM orders WHERE id = ? AND user_id = ?");
+// Get order details using the correct table name and field names
+$stmt = $conn->prepare("SELECT * FROM `ORDER` WHERE ORDER_ID = ? AND CUST_ID = ?");
 $stmt->bind_param("ii", $order_id, $_SESSION['user_id']);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -43,13 +43,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         // Simulate payment processing
         // In a real application, you would integrate with a payment gateway here
         
-        // Update order status
-        $stmt = $conn->prepare("UPDATE orders SET payment_status = 'completed', payment_method = ? WHERE id = ?");
+        // Update order status using correct field names
+        $stmt = $conn->prepare("UPDATE `ORDER` SET PAYMENT_STATUS = 'completed', PAYMENT_METHOD = ? WHERE ORDER_ID = ?");
         $stmt->bind_param("si", $payment_method, $order_id);
         
         if ($stmt->execute()) {
             // Log activity
-            logActivity($conn, $_SESSION['user_id'], 'payment_completed', "Payment completed for order #$order_id");
+            logActivity($conn, $_SESSION['user_id'], $_SESSION['user_type'], 'payment_completed', "Payment completed for order #$order_id");
             
             $payment_success = true;
         } else {
@@ -107,25 +107,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     <label class="form-label">Payment Method</label>
                                     <div class="payment-methods">
                                         <label class="payment-method">
-                                            <input type="radio" name="payment_method" value="fpx" required>
                                             <div class="payment-method-icon">
                                                 <i class="fas fa-university"></i>
-                                            </div>
                                             <span>FPX Online Banking</span>
-                                        </label>
-                                        <label class="payment-method">
-                                            <input type="radio" name="payment_method" value="credit_card">
-                                            <div class="payment-method-icon">
-                                                <i class="fas fa-credit-card"></i>
-                                            </div>
-                                            <span>Credit/Debit Card</span>
-                                        </label>
-                                        <label class="payment-method">
-                                            <input type="radio" name="payment_method" value="ewallet">
-                                            <div class="payment-method-icon">
-                                                <i class="fas fa-wallet"></i>
-                                            </div>
-                                            <span>E-Wallet</span>
+                                            <input type="radio" name="payment_method" value="fpx" required>
                                         </label>
                                     </div>
                                 </div>
@@ -191,26 +176,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <div class="order-details">
                                 <div class="order-info">
                                     <p><strong>Order #:</strong> <?php echo $order_id; ?></p>
-                                    <p><strong>Order Type:</strong> <?php echo ucfirst($order['order_type']); ?></p>
-                                    <?php if ($order['order_type'] === 'delivery'): ?>
-                                        <p><strong>Delivery Address:</strong> <?php echo htmlspecialchars($order['delivery_address']); ?></p>
-                                    <?php elseif ($order['order_type'] === 'takeaway' || $order['order_type'] === 'dine-in'): ?>
-                                        <p><strong>Pickup Time:</strong> <?php echo date('d M Y, h:i A', strtotime($order['pickup_time'])); ?></p>
+                                    <p><strong>Order Type:</strong> <?php echo ucfirst($order['ORDER_TYPE']); ?></p>
+                                    <?php if ($order['ORDER_TYPE'] === 'delivery'): ?>
+                                        <p><strong>Delivery Address:</strong> <?php echo htmlspecialchars($order['DELIVERY_ADDRESS'] ?? ''); ?></p>
+                                    <?php elseif ($order['ORDER_TYPE'] === 'takeaway' || $order['ORDER_TYPE'] === 'dine-in'): ?>
+                                        <?php if ($order['pickup_time']): ?>
+                                            <p><strong>Pickup Time:</strong> <?php echo date('d M Y, h:i A', strtotime($order['pickup_time'])); ?></p>
+                                        <?php endif; ?>
                                     <?php endif; ?>
                                 </div>
                                 
                                 <div class="order-items">
                                     <?php
-                                    $orderDetails = getOrderDetails($conn, $order_id);
-                                    foreach ($orderDetails as $item):
+                                    $orderListings = getOrderListings($conn, $order_id);
+                                    foreach ($orderListings as $item):
                                     ?>
                                         <div class="order-item">
                                             <div class="order-item-details">
-                                                <h3><?php echo htmlspecialchars($item['name']); ?></h3>
-                                                <p><?php echo $item['quantity']; ?> x <?php echo formatCurrency($item['price']); ?></p>
+                                                <h3><?php echo htmlspecialchars($item['ITEM_NAME'] ?? 'Unknown Item'); ?></h3>
+                                                <p><?php echo $item['ORDER_QUANTITY']; ?> x <?php echo formatCurrency($item['item_price']); ?></p>
                                             </div>
                                             <div class="order-item-total">
-                                                <?php echo formatCurrency($item['price'] * $item['quantity']); ?>
+                                                <?php echo formatCurrency($item['item_price'] * $item['ORDER_QUANTITY']); ?>
                                             </div>
                                         </div>
                                     <?php endforeach; ?>
@@ -219,9 +206,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <div class="order-totals">
                                     <div class="summary-row">
                                         <span>Subtotal</span>
-                                        <span><?php echo formatCurrency($order['total_amount'] - ($order['order_type'] === 'delivery' ? 5 : 0)); ?></span>
+                                        <span><?php echo formatCurrency($order['TOT_AMOUNT'] - ($order['ORDER_TYPE'] === 'delivery' ? 5 : 0)); ?></span>
                                     </div>
-                                    <?php if ($order['order_type'] === 'delivery'): ?>
+                                    <?php if ($order['ORDER_TYPE'] === 'delivery'): ?>
                                         <div class="summary-row">
                                             <span>Delivery Fee</span>
                                             <span><?php echo formatCurrency(5); ?></span>
@@ -229,7 +216,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     <?php endif; ?>
                                     <div class="summary-row summary-total">
                                         <span>Total</span>
-                                        <span><?php echo formatCurrency($order['total_amount']); ?></span>
+                                        <span><?php echo formatCurrency($order['TOT_AMOUNT']); ?></span>
                                     </div>
                                 </div>
                             </div>

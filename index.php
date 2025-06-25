@@ -305,22 +305,30 @@ if(file_exists('includes/functions.php')) {
                             $popularItems = getPopularItems($conn, 4);
                             if(!empty($popularItems)) {
                                 foreach($popularItems as $item) {
+                                    // Ensure all fields exist with defaults
+                                    $itemId = $item['id'] ?? 0;
+                                    $itemName = $item['name'] ?? 'Unknown Item';
+                                    $itemDescription = $item['description'] ?? 'No description available';
+                                    $itemPrice = $item['price'] ?? 0.00;
+                                    $itemImage = $item['image'] ?? '/placeholder.svg?height=200&width=280';
+                                    
+                                    // Check if image file exists, otherwise use placeholder
+                                    if(!empty($itemImage) && $itemImage !== '/placeholder.svg?height=200&width=280' && !file_exists($itemImage)) {
+                                        $itemImage = '/placeholder.svg?height=200&width=280';
+                                    }
+                                    
                                     echo '<div class="menu-item">';
                                     echo '<div class="menu-item-image">';
-                                    if(!empty($item['image']) && file_exists($item['image'])) {
-                                        echo '<img src="' . htmlspecialchars($item['image']) . '" alt="' . htmlspecialchars($item['name']) . '">';
-                                    } else {
-                                        echo '<img src="/placeholder.svg?height=200&width=280" alt="' . htmlspecialchars($item['name']) . '">';
-                                    }
+                                    echo '<img src="' . htmlspecialchars($itemImage) . '" alt="' . htmlspecialchars($itemName) . '">';
                                     echo '</div>';
                                     echo '<div class="menu-item-content">';
                                     echo '<div class="menu-item-title">';
-                                    echo '<h3>' . htmlspecialchars($item['name']) . '</h3>';
-                                    echo '<div class="menu-item-price">RM ' . number_format($item['price'], 2) . '</div>';
+                                    echo '<h3>' . htmlspecialchars($itemName) . '</h3>';
+                                    echo '<div class="menu-item-price">RM ' . number_format((float)$itemPrice, 2) . '</div>';
                                     echo '</div>';
-                                    echo '<div class="menu-item-description">' . htmlspecialchars($item['description']) . '</div>';
+                                    echo '<div class="menu-item-description">' . htmlspecialchars($itemDescription) . '</div>';
                                     echo '<div class="menu-item-actions">';
-                                    echo '<button class="btn btn-primary btn-sm" onclick="addToCart(' . $item['id'] . ', \'' . addslashes($item['name']) . '\', ' . $item['price'] . ', \'/placeholder.svg?height=200&width=280\')">Add to Cart</button>';
+                                    echo '<button class="btn btn-primary btn-sm" onclick="addToCart(' . (int)$itemId . ', \'' . addslashes($itemName) . '\', ' . (float)$itemPrice . ', \'' . addslashes($itemImage) . '\')">Add to Cart</button>';
                                     echo '<a href="menu.php" class="btn btn-secondary btn-sm">View Menu</a>';
                                     echo '</div>';
                                     echo '</div>';

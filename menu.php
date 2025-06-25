@@ -49,27 +49,27 @@ $menuItems = getMenuItems($conn);
                 
                 <div class="menu-grid">
                     <?php foreach ($menuItems as $item): ?>
-                        <div class="menu-item" data-category="<?php echo htmlspecialchars($item['ITEM_CATEGORY']); ?>">
+                        <div class="menu-item" data-category="<?php echo htmlspecialchars($item['category']); ?>">
                             <div class="menu-item-image">
-                                <img src="<?php echo !empty($item['image']) ? htmlspecialchars($item['image']) : '/placeholder.svg?height=200&width=280'; ?>" alt="<?php echo htmlspecialchars($item['ITEM_NAME']); ?>">
+                                <img src="<?php echo htmlspecialchars($item['image']); ?>" alt="<?php echo htmlspecialchars($item['name']); ?>">
                                 <?php if ($item['STOCK_LEVEL'] <= 5): ?>
                                     <div class="stock-warning">Low Stock</div>
                                 <?php endif; ?>
                             </div>
                             <div class="menu-item-content">
                                 <div class="menu-item-title">
-                                    <h3><?php echo htmlspecialchars($item['ITEM_NAME']); ?></h3>
-                                    <div class="menu-item-price"><?php echo formatCurrency($item['ITEM_PRICE']); ?></div>
+                                    <h3><?php echo htmlspecialchars($item['name']); ?></h3>
+                                    <div class="menu-item-price"><?php echo formatCurrency($item['price']); ?></div>
                                 </div>
                                 <div class="menu-item-description">
-                                    <?php echo htmlspecialchars($item['ITEM_DESCRIPTION']); ?>
+                                    <?php echo htmlspecialchars($item['description']); ?>
                                 </div>
                                 <div class="menu-item-stock">
                                     <span class="stock-level">Stock: <?php echo $item['STOCK_LEVEL']; ?></span>
                                 </div>
                                 <div class="menu-item-actions">
                                     <?php if ($item['STOCK_LEVEL'] > 0): ?>
-                                        <button class="btn btn-primary btn-sm" onclick="addToCart(<?php echo $item['ITEM_ID']; ?>, '<?php echo addslashes($item['ITEM_NAME']); ?>', <?php echo $item['ITEM_PRICE']; ?>, '<?php echo !empty($item['image']) ? addslashes($item['image']) : '/placeholder.svg?height=200&width=280'; ?>')">
+                                        <button class="btn btn-primary btn-sm" onclick="addToCart(<?php echo $item['id']; ?>, '<?php echo addslashes($item['name']); ?>', <?php echo $item['price']; ?>, '<?php echo addslashes($item['image']); ?>')">
                                             Add to Cart
                                         </button>
                                     <?php else: ?>
@@ -77,7 +77,7 @@ $menuItems = getMenuItems($conn);
                                             Out of Stock
                                         </button>
                                     <?php endif; ?>
-                                    <button class="btn btn-outline btn-sm" onclick="showItemDetails(<?php echo $item['ITEM_ID']; ?>)">
+                                    <button class="btn btn-outline btn-sm" onclick="showItemDetails(<?php echo $item['id']; ?>)">
                                         Details
                                     </button>
                                 </div>

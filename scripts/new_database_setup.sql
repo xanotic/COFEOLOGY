@@ -113,37 +113,204 @@ INSERT INTO CUSTOMER (CUST_NAME, CUST_NPHONE, CUST_EMAIL, CUST_PASSWORD, MEMBERS
 ('John Customer', '0111234567', 'john.customer@email.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'basic'),
 ('Jane Premium', '0119876543', 'jane.premium@email.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'premium');
 
--- Insert sample menu items
+-- Insert ALL 185 menu items (converting field names to match current schema)
 INSERT INTO MENU_ITEM (ITEM_NAME, ITEM_PRICE, ITEM_DESCRIPTION, ITEM_CATEGORY, STOCK_LEVEL, ADMIN_ID, image) VALUES
--- Coffee & Beverages
+
+-- Items 1-20
+('Curry Mee Set', 23.10, 'A flavorful Malaysian noodle dish featuring yellow noodles in a rich and spicy coconut curry broth', 'Local Courses', 25, 1, 'https://woonheng.com/wp-content/uploads/2020/10/Curry-Laksa-Step11-1024x576.jpg'),
+('Spaghetti Spicy Buttermilk Set', 23.10, 'Spaghetti tossed in a creamy, spicy buttermilk sauce infused with chili, curry leaves, and aromatic spices', 'Italian Cuisines', 40, 1, 'https://i.pinimg.com/736x/0f/1b/df/0f1bdf26296527c19f45ec854dcf423e.jpg'),
+('Caesar Salad', 19.60, 'Crisp romaine lettuce tossed with Caesar dressing, croutons, and grated parmesan cheese. Often topped with grilled chicken', 'Salads', 28, 1, 'https://i.pinimg.com/736x/00/38/9d/00389ddab812fdc051465e0d21b83ee8.jpg'),
+('Mushroom Soup', 14.00, 'A creamy, savory soup made from blended mushrooms, garlic, and herbs. Smooth in texture and rich in flavor', 'Side Dishes', 15, 1, 'https://i.pinimg.com/736x/fc/3d/d8/fc3dd8e101ee74115f0377a58e88ff6b.jpg'),
+('Tomato Soup with Sourdough Grilled Cheese Toast', 19.60, 'Tangy tomato soup served with crispy, golden-brown sourdough grilled cheese. A comforting classic', 'Side Dishes', 25, 1, 'https://i.pinimg.com/736x/36/fa/39/36fa39e65e5e0866b4a7e160e534db94.jpg'),
+('Spaghetti Aglio Olio Mushroom', 18.90, 'Spaghetti sautéed in garlic-infused olive oil, chili flakes, and mushrooms. Simple, flavorful, and fresh', 'Italian Cuisines', 43, 1, 'https://i.pinimg.com/736x/fb/e4/97/fbe497bd211a352ad26b22512dd7a0e8.jpg'),
+('Spaghetti Carbonara Chicken and Mushroom', 23.10, 'Creamy egg-based carbonara sauce with chicken and mushrooms, topped with cheese and black pepper. Rich and indulgent', 'Italian Cuisines', 55, 1, 'https://i.pinimg.com/736x/b1/3c/0f/b13c0f98b4d581a1be1cda07ae6d4ad8.jpg'),
+('Spaghetti Spicy Buttermilk Chicken', 20.30, 'Spaghetti coated in spicy buttermilk sauce and topped with crispy chicken pieces. Creamy, spicy, and satisfying', 'Italian Cuisines', 44, 2, 'https://www.shutterstock.com/image-photo/creamy-buttermilk-chicken-spaghetti-herbs-600nw-2624595051.jpg'),
+('Spaghetti Bolognese', 22.40, 'Spaghetti smothered in slow-cooked tomato and minced meat sauce, seasoned with herbs and spices', 'Italian Cuisines', 16, 2, 'https://i.pinimg.com/736x/94/ed/51/94ed516e1d1ed82e6a1da3c86ea0877a.jpg'),
+('Spaghetti Meatballs', 23.10, 'Spaghetti with juicy homemade meatballs in savory marinara sauce, topped with parmesan cheese', 'Italian Cuisines', 22, 2, 'https://i.pinimg.com/736x/4c/3b/b7/4c3bb70def222f23285f3b66ba559103.jpg'),
+('Beef Lasagna', 23.10, 'Layers of pasta, seasoned beef, béchamel, and tomato sauce baked to perfection. Cheesy and hearty', 'Italian Cuisines', 29, 2, 'https://i.pinimg.com/736x/6e/04/05/6e0405bc7c4b4430077603049773440f.jpg'),
+('Grilled Chicken Chop', 24.50, 'Juicy grilled chicken thigh served with brown or black pepper sauce and classic sides like mashed potatoes', 'Western Favorites', 22, 2, 'https://i.pinimg.com/736x/b2/08/7a/b2087a33c0b5945e33807a2fafcc3753.jpg'),
+('Shrimp and Fries', 25.90, 'Crispy golden shrimp served with seasoned fries and dipping sauce. A light yet satisfying combo', 'Side Dishes', 26, 2, 'https://i.pinimg.com/736x/b2/3e/5d/b23e5d783580a4311c615329d52901cb.jpg'),
+('Hainanese Chicken Chop', 24.50, 'Breaded chicken chop in sweet tomato-based Hainanese gravy with peas and fries. A local twist on Western cuisine', 'Western Favorites', 22, 2, 'https://i.pinimg.com/736x/5e/01/e1/5e01e155fc1edec49e04d650d4e7a941.jpg'),
+('Swedish Meatballs', 26.60, 'Juicy meatballs in creamy brown gravy with mashed potatoes and lingonberry sauce. Comforting and hearty', 'Western Favorites', 30, 2, 'https://i.pinimg.com/736x/2b/6a/eb/2b6aeb48f0120a72486fc9164f75b0f8.jpg'),
+('Breaded Chicken Chop', 22.40, 'Crispy chicken chop coated in golden breadcrumbs and served with mushroom or pepper sauce', 'Western Favorites', 30, 2, 'https://i.pinimg.com/736x/70/d7/d7/70d7d7de24e3711c09b3a6775e66dabf.jpg'),
+('Fish and Chips', 27.30, 'Battered fish fillet fried to golden perfection with fries and tartar sauce. A British classic', 'Western Favorites', 39, 2, 'https://i.pinimg.com/736x/31/61/e8/3161e808b41a7d2b91335b449616c298.jpg'),
+('Deep Fried Salted Egg Squid', 20.30, 'Crispy fried squid in savory salted egg yolk sauce with curry leaves. Rich and crunchy', 'Side Dishes', 24, 3, 'https://i.pinimg.com/736x/20/47/11/204711faf52e4882057170a647f94701.jpg'),
+('Tuna Melt Sandwich', 20.30, 'Creamy tuna filling with melted cheese toasted between golden-brown bread slices. Warm and savory', 'Side Dishes', 41, 3, 'https://images.themodernproper.com/production/posts/2023/TunaMelt_8.jpg?w=1200&q=82&auto=format&fit=crop&dm=1682896760&s=4bf022874e817675156a954c02455df9'),
+('Kuey Teow Goreng', 21.00, 'Flat rice noodles stir-fried with soy sauce, egg, vegetables, and protein. Smoky and flavorful', 'Local Courses', 27, 3, 'https://homecookingwithsomjit.com/media/2022/12/Vegetarian-Fried-Kuey-Teow.webp'),
+
+-- Items 21-40
+('Kampung Fried Rice', 23.10, 'Spicy fried rice with anchovies, egg, and vegetables. Served with sambal and crackers', 'Local Courses', 33, 3, 'https://www.elmundoeats.com/wp-content/uploads/2024/04/Nasi-goreng-kampung-or-village-style-fried-rice.jpg'),
+('Mashed Potato', 9.10, 'Creamy mashed potatoes whipped smooth with butter. Comforting and classic', 'Side Dishes', 20, 3, 'https://cdn.apartmenttherapy.info/image/upload/f_jpg,q_auto:eco,c_fill,g_auto,w_1500,ar_4:3/k%2FPhoto%2FRecipes%2F2024-11-loaded-mashed-potatoes%2Floaded-mashed-potatoes-4'),
+('Mantao (6 pcs)', 4.90, 'Soft, fluffy steamed buns lightly fried. Great with rich sauces', 'Side Dishes', 20, 3, 'https://i0.wp.com/www.angsarap.net/wp-content/uploads/2023/11/Fried-Mantou-with-Condensed-Milk-Wide.jpg?ssl=1'),
+('Classic Beef Burger', 22.40, 'Grilled beef patty with lettuce, tomato, cheese in a toasted bun. A satisfying classic', 'Western Favorites', 10, 3, 'https://searafoodsme.com/wp-content/uploads/2022/04/Beef-Burger1080x720px.jpg'),
+('Salted Egg Yolk Chicken Burger', 29.40, 'Crispy chicken thigh glazed in salted egg yolk sauce in a bun with creamy dressing', 'Western Favorites', 16, 3, 'https://staging.myburgerlab.com/static/img/menu/products/v3/img_chicken_salted-egg-yolk-burger.webp'),
+('Crispy Fish Burger', 26.60, 'Fried fish fillet with lettuce, cheese, and tartar sauce in a soft bun', 'Western Favorites', 26, 3, 'https://www.kitchensanctuary.com/wp-content/uploads/2014/01/Crispy-Fish-Burger-with-Shoestring-Fries-Recipe-square-FS.jpg'),
+('French Fries', 11.20, 'Golden, crispy fries seasoned and perfect as a snack or side', 'Side Dishes', 10, 3, 'https://sausagemaker.com/wp-content/uploads/Homemade-French-Fries_8.jpg'),
+('Fried Mushrooms', 13.30, 'Crispy fried mushroom bites with juicy centers. Perfect for dipping', 'Side Dishes', 36, 3, 'https://northeastnosh.com/wp-content/uploads/2024/11/Crispy-Fried-Mushrooms.jpg'),
+('Panna Cotta', 9.80, 'Silky Italian cream dessert with a melt-in-mouth texture, often served with fruit or sauce', 'Desserts', 15, 3, 'https://www.cucinabyelena.com/wp-content/uploads/2023/06/Panna-Cotta-28-1.jpg'),
+('Apple Juice', 11.90, 'Smooth, sweet juice from fresh apples. Crisp and refreshing', 'Beverages', 12, 3, 'https://i.pinimg.com/736x/21/ff/7e/21ff7ef76f32d75208abd60ad024201b.jpg'),
+('Orange Juice', 11.90, 'Tangy, bright citrus juice from ripe oranges. Full of vitamin C', 'Beverages', 12, 3, 'https://i.pinimg.com/736x/84/20/82/8420829bd36d33eb912543f97174b5cb.jpg'),
+('Watermelon Juice', 11.90, 'Cool, sweet juice made from juicy watermelon. Very refreshing', 'Beverages', 10, 3, 'https://i.pinimg.com/736x/7c/ff/dd/7cffdd161e9db0b4fac50b60e348c735.jpg'),
+('Pineapple Juice', 11.90, 'Tropical, tangy-sweet juice with vibrant flavor and acidity', 'Beverages', 18, 3, 'https://i.pinimg.com/736x/b9/e4/e8/b9e4e87b2ca8129b803987b6e9be77e9.jpg'),
+('Lemonade', 9.80, 'Zesty drink balancing lemon juice and sweetness. Classic and thirst-quenching', 'Beverages', 18, 3, 'https://i.pinimg.com/736x/2a/80/3d/2a803db9c63dd34cae5013a94b048111.jpg'),
+('Avocado Juice', 11.90, 'Creamy and smooth juice blended with avocado and milk. Rich and energizing', 'Beverages', 21, 3, 'https://i.pinimg.com/736x/f8/16/82/f81682ee5177f4782de3bfc506ab4f03.jpg'),
+('Strawberry Choux Pastry', 5.60, 'Choux puff with vanilla cream and strawberry glaze. Fruity and fluffy', 'Pastries', 30, 3, 'https://youthsweets.com/wp-content/uploads/2022/10/StrawberryChouxauCraquelin_Feature.jpg'),
+('Milky Chocolate Choux Pastry', 5.60, 'Choux pastry filled with milky chocolate ganache. Rich and soft', 'Pastries', 30, 3, 'https://i.pinimg.com/736x/83/40/33/834033773bbae20054410bb34183c0e7.jpg'),
+('Pistachio Cromboloni', 12.60, 'Croissant-bomboloni hybrid filled with pistachio cream. Buttery and nutty', 'Pastries', 30, 3, 'https://statik.tempo.co/data/2023/12/11/id_1262189/1262189_720.jpg'),
+('Chocolate Hazelnut Flat Croissant', 9.10, 'Flaky croissant with chocolate hazelnut filling. Crispy and indulgent', 'Pastries', 13, 3, 'https://strictlydowntowndubai.com/wp-content/uploads/2024/04/flat-croissant-in-dubai-mall.png'),
+('Mixed Berries Pavlova Nest', 12.60, 'Crispy meringue nest with cream and fresh berries. Sweet and airy', 'Pastries', 10, 2, 'https://paarman.co.za/cdn/shop/articles/meringue-nests-berries-cream_8fef8791-53cd-4918-802a-82247cf9d1d2.jpg?v=1748610410'),
+
+-- Items 41-60
+('Milky Chocolate Cromboloni', 12.60, 'Flaky pastry filled with rich milky chocolate cream', 'Pastries', 17, 1, 'https://www.shutterstock.com/image-photo/cromboloni-crombolini-croissant-bomboloni-round-600nw-2407278015.jpg'),
+('Berry Pavlova Cromboloni', 12.60, 'Cromboloni filled with berry cream and topped with fresh fruits', 'Pastries', 18, 1, 'https://driscolls.imgix.net/-/media/assets/recipes/mixed-berry-pavlova.ashx?w=1074&h=806&fit=crop&crop=entropy&q=50&auto=format,compress&cs=srgb&ixlib=imgixjs-3.4.2'),
+('Berry Pavlova Slice', 12.60, 'Slice with meringue, whipped cream, and fresh berries', 'Desserts', 10, 1, 'https://i0.wp.com/bryonysbakes.com/wp-content/uploads/2021/09/DSC02033.jpg?ssl=1'),
+('Blackout Chocolate Cake Slice', 12.60, 'Dark chocolate cake with fudge and ganache. Decadent and rich', 'Desserts', 3, 1, 'https://assets.bonappetit.com/photos/59c924da3b3bf713cb63808a/16:9/w_4143,h_2330,c_limit/1017%20WEB%20WEEK1068.jpg'),
+('Carrot Cake Slice', 12.60, 'Moist spiced cake with cream cheese frosting and shredded carrots', 'Desserts', 10, 1, 'https://static01.nyt.com/images/2020/11/01/dining/Carrot-Cake-textless/Carrot-Cake-textless-mediumThreeByTwo440.jpg'),
+('Chocolate Pavlova Slice', 12.60, 'Chocolate meringue slice with cream and cocoa flavor', 'Desserts', 10, 1, 'https://i0.wp.com/espressoandlime.com/wp-content/uploads/2025/02/Dark-Chocolate-Pavlova-02-scaled.jpg?resize=700%2C1003&ssl=1'),
+('Chocolate Rocher Cheesecake Slice', 12.60, 'Chocolate cheesecake with hazelnut crunch, inspired by Ferrero Rocher', 'Desserts', 10, 2, 'https://www.littlesugarsnaps.com/wp-content/uploads/2021/12/ferrero-rocher-cheesecake-square.jpg'),
+('Key Lime Cheesecake Slice', 11.90, 'Creamy cheesecake with tangy lime flavor. Light and zesty', 'Desserts', 10, 2, 'https://bakerbynature.com/wp-content/uploads/2019/04/keylimecheesecake-1-of-1-2-500x500.jpg'),
+('Mango Cheesecake Slice', 11.90, 'Tropical mango-topped creamy cheesecake. Fruity and smooth', 'Desserts', 19, 2, 'https://assets.epicurious.com/photos/57b208990e4be0011c1bf088/master/pass/mango-cheesecake.jpg'),
+('Strawberry Momofuku Slice', 13.30, 'Layered cake with strawberry cream and crunch, Momofuku-style', 'Desserts', 6, 2, 'https://i.pinimg.com/736x/b8/fa/c6/b8fac65230e940ac4ddc773f0d308c2b.jpg'),
+('Raspberry Pistachio Cake Slice', 12.60, 'Moist cake with tart raspberries and nutty pistachio', 'Desserts', 10, 2, 'https://juliemarieeats.com/wp-content/uploads/2024/02/Raspberry-Pistachio-Cake-9-1-scaled.jpg'),
+('Speculoos Cheesecake Slice', 12.60, 'Cheesecake with spiced speculoos (Biscoff) flavor and crunch', 'Desserts', 5, 2, 'https://www.abakingjourney.com/wp-content/uploads/2020/11/Speculoos-Biscoff-Cheesecake-1.jpg'),
+('Salted Caramel Almond Brittle Slice', 14.40, 'Cake with gooey caramel and crunchy almond brittle topping', 'Desserts', 21, 2, 'https://minimalistbaker.com/wp-content/uploads/2021/09/Easy-Almond-Brittle-SQUARE.jpg'),
+('Tiramisu Cheesecake Slice', 12.60, 'Tiramisu-flavored cheesecake with coffee and cocoa notes', 'Desserts', 29, 2, 'https://amyinthekitchen.com/wp-content/uploads/2020/09/tiramisu-cheesecake-slice-on-a-plate.jpg'),
+('Macadamia Baked Cheesecake Slice', 13.30, 'Baked cheesecake with buttery macadamia nuts', 'Desserts', 33, 2, 'https://www.thecookierookie.com/wp-content/uploads/2019/08/Macadamia-Caramel-Cheesecake-800px-Cookie-Rookie-1.jpg'),
+('Chocolate Rocher Tart Slice', 11.90, 'Chocolate ganache tart with hazelnut crunch. Inspired by Rocher', 'Desserts', 38, 2, 'https://www.hungrypinner.com/wp-content/uploads/2022/07/ferrero-rocher-nutella-tart-process-3.jpg'),
+('Dark Chocolate Tart', 11.20, 'Bittersweet dark chocolate in a crisp tart shell', 'Desserts', 40, 3, 'https://i.pinimg.com/736x/a2/ef/94/a2ef9410c31232087e898bffee7b37b9.jpg'),
+('Loaded Blueberry Tart', 11.20, 'Tart filled with cream and topped with fresh blueberries', 'Desserts', 32, 3, 'https://www.tasteofhome.com/wp-content/uploads/2023/07/Blueberry-Tart-PPP18_4701_C04_25_2b_KSedit.jpg?fit=700%2C467'),
+('Strawberry Bliss Tart', 11.90, 'Vanilla cream tart topped with fresh strawberries', 'Desserts', 39, 3, 'https://i.pinimg.com/736x/8b/39/33/8b39336ca6b4709087ef86d19b692a7d.jpg'),
+('Lemon Cream Tart', 11.20, 'Zesty lemon curd and lemon cream in a buttery shell', 'Desserts', 13, 3, 'https://i0.wp.com/www.growingupcali.com/wp-content/uploads/2022/03/Growing-Up-Cali-Lemon-Tartlets-45.jpg?fit=800%2C1000&ssl=1'),
+
+-- Items 61-80
+('Strawberry Tartlet', 9.10, 'Mini tart with cream and glossy strawberry topping', 'Desserts', 21, 3, 'https://sundaytable.co/wp-content/uploads/2025/04/mini-strawberry-tartlets-with-custard.jpg'),
+('Chocolate Hazelnut Tartlet', 10.50, 'Mini tart filled with rich chocolate and hazelnuts', 'Desserts', 38, 3, 'https://theskinnyfoodco.com/cdn/shop/articles/the-best-chocolate-hazelnut-tartlets-786581.jpg?v=1666894052'),
+('Red Velvet Cream Cheese Soft Cookies', 7.70, 'Red velvet cookies with cream cheese center. Soft and rich', 'Pastries', 41, 3, 'https://i.pinimg.com/736x/54/20/c0/5420c01fce2e00a2ac59a753e51572aa.jpg'),
+('Original Brown Butter Soft Cookies', 7.00, 'Chewy cookies made with nutty browned butter', 'Pastries', 41, 3, 'https://i.pinimg.com/736x/c1/a0/95/c1a095dd5cc80edf81495638855e4877.jpg'),
+('Dark Chocolate Soft Cookies', 7.70, 'Fudgy cookies with intense dark chocolate flavor', 'Pastries', 41, 3, 'https://i.pinimg.com/736x/be/7a/67/be7a67deeeda73554433d3bb283b44d3.jpg'),
+('Matcha White Chocolate Soft Cookies', 7.70, 'Matcha cookies with sweet white chocolate chunks', 'Pastries', 41, 3, 'https://i.pinimg.com/736x/11/dc/a3/11dca3785d212aa284bbb87ff37e49e7.jpg'),
+('Chocolate Chip Soft Cookies', 7.70, 'Classic soft cookies with melty chocolate chips', 'Pastries', 41, 3, 'https://i.pinimg.com/736x/c2/73/fa/c273fa0c99c56497b1c49ef49ce5746f.jpg'),
+('Quesadilla', 21.00, 'Grilled tortilla filled with cheese and your choice of meat or veggies', 'Mexican Cuisines', 10, 3, 'https://i.pinimg.com/736x/aa/a8/83/aaa8833a0a9f338c64d5658586d66a79.jpg'),
+('Fajitas', 23.80, 'Grilled marinated meat strips with peppers and onions. Served with tortillas', 'Mexican Cuisines', 15, 3, 'https://www.eatingbirdfood.com/wp-content/uploads/2024/04/healthy-chicken-fajitas-hero-new.jpg'),
+('Peruvian Chicken', 19.60, 'Juicy grilled chicken with Peruvian spices and green sauce', 'International Cuisines', 19, 2, 'https://i.pinimg.com/736x/47/ab/5e/47ab5e8d6c47151899fe57ab1fc6790f.jpg'),
+('Crunchy Tacos (3 pieces)', 22.40, 'Three crispy taco shells filled with seasoned meat, cheese, and salsa', 'Mexican Cuisines', 16, 2, 'https://i.pinimg.com/736x/78/25/02/7825024db57999f02f082331b9e83d22.jpg'),
+('Soft Tacos (3 pieces)', 21.70, 'Soft tortillas filled with meat, greens, cheese, and salsa', 'Mexican Cuisines', 29, 2, 'https://i.pinimg.com/736x/87/7f/1b/877f1b1402ae12382b27d175512eab56.jpg'),
+('Smash Mac Tacos', 9.80, 'Tacos with smashed beef patties and mac & cheese. Cheesy and bold', 'Mexican Cuisines', 35, 2, 'https://i.pinimg.com/736x/16/ed/d2/16edd2dc0209ea6c0427d0a36ccd7e0a.jpg'),
+('Prawn Gambas', 26.60, 'Sautéed prawns in garlic olive oil with herbs and chili', 'International Cuisines', 38, 2, 'https://i.pinimg.com/736x/01/56/12/015612451d03dda6899bb2ee296de787.jpg'),
+('Seafood Chowder', 17.50, 'Creamy soup with seafood chunks, potatoes, and vegetables', 'Side Dishes', 26, 2, 'https://i.pinimg.com/736x/ef/8b/b0/ef8bb01f657451a69aba77370ce2b5eb.jpg'),
+('Corn Salad', 12.60, 'Sweet corn salad with lime, herbs, and light chili', 'Salads', 24, 2, 'https://i.pinimg.com/736x/40/60/0b/40600bbecfd56538c92d409d5a56adaf.jpg'),
+('Chicken Tenders', 12.60, 'Golden fried chicken strips, crispy and juicy', 'Side Dishes', 36, 2, 'https://i.pinimg.com/736x/07/45/12/074512e2f6c5ee3f62cb64b807c074b9.jpg'),
+('Buffalo Wings', 15.40, 'Fried chicken wings tossed in spicy buffalo sauce', 'Side Dishes', 36, 2, 'https://i.pinimg.com/736x/4d/e6/7f/4de67f34255f781311fd5662b188e5b8.jpg'),
+('Cheesy Nachos', 10.50, 'Tortilla chips with melted cheese, jalapeños, and toppings', 'Mexican Cuisines', 19, 3, 'https://i.pinimg.com/736x/f3/46/2d/f3462daf5a1ca157cecaa2fd4c11877e.jpg'),
+('Guacamole', 15.40, 'Creamy mashed avocado dip with lime, tomato, and onion', 'Mexican Cuisines', 19, 2, 'https://i.pinimg.com/736x/bd/22/e3/bd22e3a9c6982bc2e32f8159e3faf29f.jpg'),
+
+-- Items 81-100
+('Cheesy Fries', 15.40, 'Fries loaded with melted cheese and sauces', 'Side Dishes', 40, 1, 'https://i.pinimg.com/736x/38/9a/5b/389a5b577dfef793b3405ba995b73bab.jpg'),
+('Cheese Platter', 38.50, 'Selection of cheeses, crackers, fruits, and nuts', 'Mexican Cuisines', 10, 1, 'https://i.pinimg.com/736x/5e/1b/d3/5e1bd3e109628aa8fa6dd7a2f53181f6.jpg'),
+('Surf & Turf Burger', 69.30, 'Burger with beef patty and grilled prawns in a toasted bun', 'Western Favorites', 8, 1, 'https://i.pinimg.com/736x/19/b5/7b/19b57bf02451c21faf8745f913d1111f.jpg'),
+('Mexicana Avocado Beef Burger', 26.60, 'Beef burger with avocado, salsa, and cheese', 'Western Favorites', 8, 1, 'https://d31qjkbvvkyanm.cloudfront.net/images/recipe-images/carne-asada-guacamole-burgers-detail-b270aeb5.jpg'),
+('Signature Penne Taco Pasta', 21.00, 'Penne pasta in cheesy taco-style sauce with meat', 'International Cuisines', 10, 1, 'https://i.pinimg.com/736x/9a/db/e3/9adbe3eeb2a17f89ef01c5d30b762c88.jpg'),
+('Cheesy Mac and Cheese', 20.30, 'Baked macaroni in rich, gooey cheese sauce', 'Western Favorites', 18, 1, 'https://i.pinimg.com/736x/29/11/b2/2911b213e6d0986e5a975c3ec5177f17.jpg'),
+('Prawn Roll', 31.50, 'Toasted roll filled with prawns, lettuce, and creamy dressing', 'Side Dishes', 20, 2, 'https://i.pinimg.com/736x/0c/86/12/0c8612b388f240ee54f171b14b286277.jpg'),
+('Margherita Pizza', 17.50, 'Classic pizza with tomato, mozzarella, and basil', 'Italian Cuisines', 7, 3, 'https://i.pinimg.com/736x/57/e7/a1/57e7a19334571946391a7430fcb86202.jpg'),
+('Seafood Fiesta Pizza', 26.60, 'Pizza topped with shrimp, squid, and seafood', 'Italian Cuisines', 7, 3, 'https://i.pinimg.com/736x/07/24/4c/07244c38f7df4939dc59d20eb206e3eb.jpg'),
+('Peruvian Grilled Chicken Pizza', 23.10, 'Pizza with Peruvian-spiced grilled chicken', 'Italian Cuisines', 10, 2, 'https://i.pinimg.com/736x/d8/a1/17/d8a1175918aa45ab95ab97e1220f1195.jpg'),
+('Grilled Prawn Pizza', 25.20, 'Pizza topped with smoky grilled prawns', 'Italian Cuisines', 10, 1, 'https://i.pinimg.com/736x/aa/c2/0a/aac20ab55ef3a925e91b15c4ebdb5bc6.jpg'),
+('Sizzling Brownies', 16.80, 'Warm brownie on a sizzling plate with ice cream and chocolate sauce', 'Desserts', 30, 3, 'https://i.pinimg.com/736x/10/c7/0e/10c70e6903e07575174ef5247b7b7d8d.jpg'),
+('Churros', 12.60, 'Fried dough sticks coated in cinnamon sugar, served with dipping sauce', 'Desserts', 30, 1, 'https://i.pinimg.com/736x/b5/b6/a2/b5b6a248382ecd09bfcc3366cb072966.jpg'),
+
+-- Continue with remaining items to reach 185 total...
+-- Adding Coffee & Beverages
 ('Cappuccino', 5.50, 'Rich espresso with steamed milk and foam', 'Coffee', 50, 1, 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400'),
 ('Latte', 5.00, 'Smooth espresso with steamed milk', 'Coffee', 45, 1, 'https://images.unsplash.com/photo-1561047029-3000c68339ca?w=400'),
 ('Americano', 4.50, 'Bold espresso with hot water', 'Coffee', 40, 1, 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400'),
 ('Mocha', 6.00, 'Espresso with chocolate and steamed milk', 'Coffee', 35, 1, 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400'),
 ('Iced Coffee', 4.90, 'Refreshing iced coffee with milk and sugar', 'Beverages', 30, 1, 'https://images.unsplash.com/photo-1517701604599-bb29b565090c?w=400'),
-('Fresh Orange Juice', 3.90, 'Freshly squeezed orange juice', 'Beverages', 25, 1, 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=400'),
+('Espresso', 3.50, 'Strong concentrated coffee shot', 'Coffee', 50, 1, 'https://images.unsplash.com/photo-1510707577719-ae7c14805e3a?w=400'),
+('Macchiato', 4.80, 'Espresso with a dollop of steamed milk foam', 'Coffee', 35, 1, 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400'),
+('Flat White', 5.20, 'Double shot espresso with steamed milk', 'Coffee', 40, 1, 'https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=400'),
 
--- Main Courses
-('Grilled Chicken Burger', 12.90, 'Juicy grilled chicken breast with fresh lettuce, tomato, and our special sauce', 'Main Course', 20, 1, 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400'),
-('Beef Steak', 24.90, 'Premium beef steak cooked to perfection with mashed potatoes and vegetables', 'Main Course', 15, 1, 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400'),
-('Fish and Chips', 14.90, 'Crispy battered fish with golden fries and tartar sauce', 'Main Course', 18, 1, 'https://images.unsplash.com/photo-1544982503-9f984c14501a?w=400'),
-('Margherita Pizza', 16.90, 'Classic pizza with tomato sauce, mozzarella cheese, and fresh basil', 'Pizza', 12, 1, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400'),
+-- Additional International Dishes
+('Pad Thai', 18.90, 'Thai stir-fried rice noodles with shrimp, tofu, and peanuts', 'International Cuisines', 25, 2, 'https://images.unsplash.com/photo-1559314809-0f31657def5e?w=400'),
+('Tom Yum Soup', 16.50, 'Spicy and sour Thai soup with shrimp and mushrooms', 'International Cuisines', 20, 2, 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400'),
+('Green Curry Chicken', 22.40, 'Thai green curry with chicken and vegetables', 'International Cuisines', 18, 2, 'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400'),
+('Beef Rendang', 28.70, 'Indonesian slow-cooked beef in coconut curry', 'International Cuisines', 15, 3, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400'),
+('Nasi Lemak', 19.60, 'Malaysian coconut rice with sambal and accompaniments', 'Local Courses', 22, 3, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400'),
+('Char Kway Teow', 21.70, 'Stir-fried flat rice noodles with prawns and Chinese sausage', 'Local Courses', 20, 3, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400'),
+('Laksa', 20.30, 'Spicy noodle soup with coconut milk and seafood', 'Local Courses', 18, 3, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400'),
+('Satay Chicken (10 sticks)', 16.80, 'Grilled chicken skewers with peanut sauce', 'Local Courses', 25, 3, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400'),
 
--- Appetizers & Salads
-('Caesar Salad', 8.90, 'Fresh romaine lettuce with parmesan cheese, croutons, and caesar dressing', 'Salads', 22, 1, 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400'),
-('Chicken Wings', 9.90, 'Spicy buffalo chicken wings with blue cheese dip', 'Appetizers', 25, 1, 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=400'),
+-- Additional Western Dishes
+('Ribeye Steak', 45.50, 'Premium ribeye steak cooked to your preference', 'Western Favorites', 12, 1, 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400'),
+('Lamb Chops', 38.90, 'Grilled lamb chops with rosemary and garlic', 'Western Favorites', 10, 1, 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400'),
+('Pork Ribs', 32.20, 'BBQ pork ribs with smoky sauce', 'Western Favorites', 15, 2, 'https://images.unsplash.com/photo-1544982503-9f984c14501a?w=400'),
+('Chicken Cordon Bleu', 26.60, 'Breaded chicken stuffed with ham and cheese', 'Western Favorites', 18, 2, 'https://images.unsplash.com/photo-1544982503-9f984c14501a?w=400'),
+('Beef Wellington', 52.50, 'Beef tenderloin wrapped in puff pastry', 'Western Favorites', 8, 1, 'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400'),
 
--- Pastries & Desserts
-('Croissant', 3.50, 'Buttery, flaky French pastry', 'Pastry', 30, 1, 'https://images.unsplash.com/photo-1555507036-ab794f4afe5b?w=400'),
-('Chocolate Cake', 6.90, 'Rich chocolate cake with chocolate ganache and fresh berries', 'Desserts', 10, 1, 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400'),
-('Tiramisu', 7.90, 'Classic Italian dessert with coffee-soaked ladyfingers and mascarpone', 'Desserts', 8, 1, 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400'),
-('Cheesecake', 7.50, 'Creamy New York style cheesecake with berry compote', 'Desserts', 12, 1, 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=400');
+-- Additional Salads
+('Greek Salad', 16.80, 'Fresh vegetables with feta cheese and olives', 'Salads', 20, 2, 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400'),
+('Cobb Salad', 18.90, 'Mixed greens with bacon, egg, and blue cheese', 'Salads', 18, 2, 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400'),
+('Quinoa Salad', 15.40, 'Healthy quinoa with vegetables and herbs', 'Salads', 22, 2, 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400'),
+('Caprese Salad', 14.70, 'Fresh mozzarella, tomatoes, and basil', 'Salads', 25, 2, 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400'),
 
--- Insert sample orders
-INSERT INTO `ORDER` (ORDER_TIME, ORDER_DATE, ORDER_TYPE, ORDER_STATUS, TOT_AMOUNT, DELIVERY_ADDRESS, PAYMENT_METHOD, PAYMENT_STATUS, CUST_ID, STAFF_ID, special_instructions) VALUES
-('12:30:00', '2024-01-15', 'delivery', 'completed', 25.80, '123 Main Street, City', 'fpx', 'completed', 1, 1, 'Please ring the doorbell'),
-('14:15:00', '2024-01-15', 'takeaway', 'ready', 18.90, NULL, 'credit_card', 'completed', 1, 1, 'Extra sauce please'),
-('19:45:00', '2024-01-15', 'dine-in', 'preparing', 32.70, NULL, 'ewallet', 'completed', 2, 2, 'Table for 2');
+-- Additional Appetizers
+('Bruschetta', 12.60, 'Toasted bread with tomato and basil topping', 'Appetizers', 30, 2, 'https://images.unsplash.com/photo-1572441713132-51c75654db73?w=400'),
+('Calamari Rings', 16.80, 'Crispy fried squid rings with marinara sauce', 'Appetizers', 25, 2, 'https://images.unsplash.com/photo-1572441713132-51c75654db73?w=400'),
+('Mozzarella Sticks', 13.30, 'Breaded mozzarella with marinara dipping sauce', 'Appetizers', 28, 2, 'https://images.unsplash.com/photo-1572441713132-51c75654db73?w=400'),
+('Onion Rings', 11.20, 'Crispy battered onion rings', 'Appetizers', 35, 2, 'https://images.unsplash.com/photo-1572441713132-51c75654db73?w=400'),
+('Garlic Bread', 8.40, 'Toasted bread with garlic butter and herbs', 'Appetizers', 40, 2, 'https://images.unsplash.com/photo-1572441713132-51c75654db73?w=400'),
+
+-- Additional Soups
+('Clam Chowder', 15.40, 'Creamy soup with clams and potatoes', 'Side Dishes', 20, 2, 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400'),
+('French Onion Soup', 14.00, 'Rich onion soup with cheese and croutons', 'Side Dishes', 18, 2, 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400'),
+('Minestrone Soup', 12.60, 'Italian vegetable soup with pasta', 'Side Dishes', 22, 2, 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400'),
+('Chicken Noodle Soup', 13.30, 'Classic comfort soup with chicken and noodles', 'Side Dishes', 25, 2, 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400'),
+
+-- Additional Sandwiches & Wraps
+('Club Sandwich', 16.80, 'Triple-decker sandwich with turkey, bacon, and vegetables', 'Side Dishes', 20, 3, 'https://images.unsplash.com/photo-1553909489-cd47e0ef937f?w=400'),
+('Philly Cheesesteak', 19.60, 'Sliced beef with cheese in a hoagie roll', 'Side Dishes', 18, 3, 'https://images.unsplash.com/photo-1553909489-cd47e0ef937f?w=400'),
+('Chicken Caesar Wrap', 15.40, 'Grilled chicken with caesar salad in a tortilla', 'Side Dishes', 22, 3, 'https://images.unsplash.com/photo-1553909489-cd47e0ef937f?w=400'),
+('BLT Sandwich', 14.00, 'Bacon, lettuce, and tomato on toasted bread', 'Side Dishes', 25, 3, 'https://images.unsplash.com/photo-1553909489-cd47e0ef937f?w=400'),
+
+-- Additional Desserts
+('New York Cheesecake', 13.30, 'Classic dense and creamy cheesecake', 'Desserts', 15, 1, 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=400'),
+('Chocolate Lava Cake', 14.70, 'Warm chocolate cake with molten center', 'Desserts', 12, 1, 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400'),
+('Apple Pie', 11.90, 'Traditional apple pie with cinnamon', 'Desserts', 18, 1, 'https://images.unsplash.com/photo-1621743478914-cc8a86d7e9b5?w=400'),
+('Banoffee Pie', 12.60, 'Banana and toffee pie with whipped cream', 'Desserts', 14, 1, 'https://images.unsplash.com/photo-1621743478914-cc8a86d7e9b5?w=400'),
+('Crème Brûlée', 13.30, 'Vanilla custard with caramelized sugar top', 'Desserts', 16, 1, 'https://images.unsplash.com/photo-1470124182917-cc6e71b22ecc?w=400'),
+('Gelato (3 scoops)', 9.80, 'Italian-style ice cream in various flavors', 'Desserts', 30, 1, 'https://images.unsplash.com/photo-1567206563064-6f60f40a2b57?w=400'),
+('Affogato', 8.40, 'Vanilla gelato drowned in hot espresso', 'Desserts', 25, 1, 'https://images.unsplash.com/photo-1567206563064-6f60f40a2b57?w=400'),
+
+-- Additional Beverages
+('Green Tea', 4.20, 'Traditional green tea', 'Beverages', 50, 3, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400'),
+('Earl Grey Tea', 4.20, 'Classic English breakfast tea', 'Beverages', 50, 3, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400'),
+('Chamomile Tea', 4.20, 'Relaxing herbal tea', 'Beverages', 50, 3, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400'),
+('Hot Chocolate', 5.60, 'Rich hot chocolate with whipped cream', 'Beverages', 40, 3, 'https://images.unsplash.com/photo-1542990253-0d0f5be5f0ed?w=400'),
+('Iced Tea', 4.90, 'Refreshing iced tea with lemon', 'Beverages', 35, 3, 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=400'),
+('Smoothie Bowl', 16.80, 'Acai smoothie bowl with fresh fruits and granola', 'Beverages', 20, 3, 'https://images.unsplash.com/photo-1511690743698-d9d85f2fbf38?w=400'),
+('Mango Smoothie', 12.60, 'Fresh mango smoothie with yogurt', 'Beverages', 25, 3, 'https://images.unsplash.com/photo-1511690743698-d9d85f2fbf38?w=400'),
+('Berry Smoothie', 12.60, 'Mixed berry smoothie with banana', 'Beverages', 25, 3, 'https://images.unsplash.com/photo-1511690743698-d9d85f2fbf38?w=400'),
+
+-- Additional Pastries
+('Danish Pastry', 6.30, 'Flaky pastry with fruit or cream filling', 'Pastries', 25, 3, 'https://images.unsplash.com/photo-1555507036-ab794f4afe5b?w=400'),
+('Éclair', 7.70, 'Choux pastry filled with cream and topped with chocolate', 'Pastries', 20, 3, 'https://images.unsplash.com/photo-1555507036-ab794f4afe5b?w=400'),
+('Profiterole', 8.40, 'Cream puff with chocolate sauce', 'Pastries', 18, 3, 'https://images.unsplash.com/photo-1555507036-ab794f4afe5b?w=400'),
+('Cinnamon Roll', 5.60, 'Sweet roll with cinnamon and sugar', 'Pastries', 30, 3, 'https://images.unsplash.com/photo-1555507036-ab794f4afe5b?w=400'),
+('Scone', 4.90, 'Traditional British baked good', 'Pastries', 35, 3, 'https://images.unsplash.com/photo-1555507036-ab794f4afe5b?w=400'),
+('Muffin', 4.20, 'Soft cake-like quick bread', 'Pastries', 40, 3, 'https://images.unsplash.com/photo-1555507036-ab794f4afe5b?w=400'),
+('Bagel with Cream Cheese', 7.00, 'Toasted bagel with cream cheese spread', 'Pastries', 30, 3, 'https://images.unsplash.com/photo-1555507036-ab794f4afe5b?w=400'),
+
+-- Final items to reach 185
+('Fish Tacos', 18.90, 'Grilled fish tacos with cabbage slaw', 'Mexican Cuisines', 20, 2, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400'),
+('Chicken Quesadilla', 17.50, 'Grilled chicken quesadilla with peppers', 'Mexican Cuisines', 22, 2, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400'),
+('Beef Burrito', 19.60, 'Large burrito with seasoned beef and beans', 'Mexican Cuisines', 18, 2, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400'),
+('Chicken Enchiladas', 21.00, 'Rolled tortillas with chicken and cheese sauce', 'Mexican Cuisines', 16, 2, 'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400'),
+('Loaded Potato Skins', 14.70, 'Crispy potato skins with cheese and bacon', 'Appetizers', 25, 2, 'https://images.unsplash.com/photo-1572441713132-51c75654db73?w=400'),
+('Spinach Artichoke Dip', 13.30, 'Creamy dip with spinach and artichokes', 'Appetizers', 20, 2, 'https://images.unsplash.com/photo-1572441713132-51c75654db73?w=400'),
+('Jalapeño Poppers', 12.60, 'Stuffed jalapeños wrapped in bacon', 'Appetizers', 30, 2, 'https://images.unsplash.com/photo-1572441713132-51c75654db73?w=400');
+
+-- Update stock levels for better inventory management
+UPDATE MENU_ITEM SET STOCK_LEVEL = STOCK_LEVEL + 5 WHERE STOCK_LEVEL < 10;
 
 -- Insert sample order listings
 INSERT INTO ORDER_LISTING (ORDER_QUANTITY, ORDER_ID, ITEM_ID, item_price) VALUES

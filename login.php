@@ -112,13 +112,57 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     
                     <form action="login.php" method="post">
                         <div class="form-group">
-                            <label for="user_type" class="form-label">Login As</label>
-                            <select id="user_type" name="user_type" class="form-control">
-                                <option value="">Auto Detect</option>
-                                <option value="customer">Customer</option>
-                                <option value="staff">Staff</option>
-                                <option value="admin">Admin</option>
-                            </select>
+                            <label class="form-label">Login As</label>
+                            <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 10px;">
+                                <label class="user-type-method">
+                                    <input type="radio" id="user_type_auto" name="user_type" value="" class="form-check-input" <?php if(!isset($_POST['user_type']) || $_POST['user_type'] === '') echo 'checked'; ?>>
+                                    <div class="user-type-method-icon"><i class="fas fa-magic"></i></div>
+                                    <span>Auto Detect</span>
+                                </label>
+                                <label class="user-type-method">
+                                    <input type="radio" id="user_type_customer" name="user_type" value="customer" class="form-check-input" <?php if(isset($_POST['user_type']) && $_POST['user_type'] === 'customer') echo 'checked'; ?>>
+                                    <div class="user-type-method-icon"><i class="fas fa-user"></i></div>
+                                    <span>Customer</span>
+                                </label>
+                                <label class="user-type-method">
+                                    <input type="radio" id="user_type_staff" name="user_type" value="staff" class="form-check-input" <?php if(isset($_POST['user_type']) && $_POST['user_type'] === 'staff') echo 'checked'; ?>>
+                                    <div class="user-type-method-icon"><i class="fas fa-user-tie"></i></div>
+                                    <span>Staff</span>
+                                </label>
+                                <label class="user-type-method">
+                                    <input type="radio" id="user_type_admin" name="user_type" value="admin" class="form-check-input" <?php if(isset($_POST['user_type']) && $_POST['user_type'] === 'admin') echo 'checked'; ?>>
+                                    <div class="user-type-method-icon"><i class="fas fa-user-shield"></i></div>
+                                    <span>Admin</span>
+                                </label>
+                            </div>
+                            <style>
+                                .user-type-method {
+                                    display: flex;
+                                    align-items: center;
+                                    gap: 8px;
+                                    padding: 6px 12px;
+                                    border-radius: 6px;
+                                    border: 1px solid #ddd;
+                                    background: #fff;
+                                    cursor: pointer;
+                                    transition: border 0.2s;
+                                }
+                                .user-type-method:hover, .user-type-method input:checked ~ .user-type-method-icon {
+                                    border-color: #ff6b6b;
+                                }
+                                .user-type-method-icon {
+                                    width: 24px;
+                                    height: 24px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: 1.2em;
+                                    color: #ff6b6b;
+                                }
+                                .user-type-method input[type="radio"] {
+                                    margin-right: 4px;
+                                }
+                            </style>
                         </div>
                         
                         <div class="form-group">
@@ -146,27 +190,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <p>Don't have an account? <a href="register.php">Register here</a></p>
                         </div>
                     </form>
-                    
-                    <div class="demo-accounts">
-                        <h3>Demo Accounts</h3>
-                        <div class="demo-grid">
-                            <div class="demo-account">
-                                <h4>Admin</h4>
-                                <p>Username: admin</p>
-                                <p>Password: password</p>
-                            </div>
-                            <div class="demo-account">
-                                <h4>Staff</h4>
-                                <p>Email: staff@cafedelights.com</p>
-                                <p>Password: password</p>
-                            </div>
-                            <div class="demo-account">
-                                <h4>Customer</h4>
-                                <p>Email: john.customer@email.com</p>
-                                <p>Password: password</p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </section>

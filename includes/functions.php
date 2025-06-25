@@ -30,7 +30,7 @@ function getPopularItems($conn, $limit = 4) {
         return $items;
     }
     
-    $sql = "SELECT * FROM MENU_ITEM WHERE active = 1 ORDER BY STOCK_LEVEL DESC LIMIT ?";
+    $sql = "SELECT ITEM_ID as id, ITEM_NAME as name, ITEM_DESCRIPTION as description, ITEM_PRICE as price, ITEM_CATEGORY as category, STOCK_LEVEL, image FROM MENU_ITEM WHERE active = 1 ORDER BY STOCK_LEVEL DESC LIMIT ?";
     $stmt = $conn->prepare($sql);
     
     if($stmt) {
@@ -39,7 +39,17 @@ function getPopularItems($conn, $limit = 4) {
         $result = $stmt->get_result();
         
         while ($row = $result->fetch_assoc()) {
-            $items[] = $row;
+            // Ensure all required fields have default values
+            $item = [
+                'id' => $row['id'] ?? 0,
+                'name' => $row['name'] ?? 'Unknown Item',
+                'description' => $row['description'] ?? 'No description available',
+                'price' => $row['price'] ?? 0.00,
+                'category' => $row['category'] ?? 'general',
+                'STOCK_LEVEL' => $row['STOCK_LEVEL'] ?? 0,
+                'image' => $row['image'] ?? '/placeholder.svg?height=200&width=280'
+            ];
+            $items[] = $item;
         }
         $stmt->close();
     }
@@ -56,7 +66,7 @@ function getMenuItems($conn, $category = null) {
         return $items;
     }
     
-    $sql = "SELECT * FROM MENU_ITEM WHERE active = 1";
+    $sql = "SELECT ITEM_ID as id, ITEM_NAME as name, ITEM_DESCRIPTION as description, ITEM_PRICE as price, ITEM_CATEGORY as category, STOCK_LEVEL, image FROM MENU_ITEM WHERE active = 1";
     
     if ($category) {
         $sql .= " AND ITEM_CATEGORY = ?";
@@ -71,7 +81,17 @@ function getMenuItems($conn, $category = null) {
         $result = $stmt->get_result();
         
         while ($row = $result->fetch_assoc()) {
-            $items[] = $row;
+            // Ensure all required fields have default values
+            $item = [
+                'id' => $row['id'] ?? 0,
+                'name' => $row['name'] ?? 'Unknown Item',
+                'description' => $row['description'] ?? 'No description available',
+                'price' => $row['price'] ?? 0.00,
+                'category' => $row['category'] ?? 'general',
+                'STOCK_LEVEL' => $row['STOCK_LEVEL'] ?? 0,
+                'image' => $row['image'] ?? '/placeholder.svg?height=200&width=280'
+            ];
+            $items[] = $item;
         }
         $stmt->close();
     }
