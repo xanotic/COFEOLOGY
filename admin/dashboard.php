@@ -13,37 +13,37 @@ if (!isAdmin()) {
 $stats = [];
 
 // Total orders
-$result = $conn->query("SELECT COUNT(*) as total FROM orders");
+$result = $conn->query("SELECT COUNT(*) as total FROM `ORDER`");
 $stats['total_orders'] = $result ? $result->fetch_assoc()['total'] : 0;
 
-// Total users
-$result = $conn->query("SELECT COUNT(*) as total FROM users WHERE role = 'customer'");
+// Total users (customers)
+$result = $conn->query("SELECT COUNT(*) as total FROM CUSTOMER");
 $stats['total_customers'] = $result ? $result->fetch_assoc()['total'] : 0;
 
 // Total revenue
-$result = $conn->query("SELECT SUM(total_amount) as total FROM orders WHERE status = 'completed'");
+$result = $conn->query("SELECT SUM(TOT_AMOUNT) as total FROM `ORDER` WHERE ORDER_STATUS = 'completed'");
 $stats['total_revenue'] = $result ? ($result->fetch_assoc()['total'] ?? 0) : 0;
 
 // Today's orders
 $today = date('Y-m-d');
-$result = $conn->query("SELECT COUNT(*) as total FROM orders WHERE DATE(created_at) = '$today'");
+$result = $conn->query("SELECT COUNT(*) as total FROM `ORDER` WHERE DATE(ORDER_DATE) = '$today'");
 $stats['today_orders'] = $result ? $result->fetch_assoc()['total'] : 0;
 
 // Recent orders
 $stmt = $conn->prepare("
-    SELECT o.*, u.name as customer_name, u.email as customer_email
-    FROM orders o
-    JOIN users u ON o.user_id = u.id
-    ORDER BY o.created_at DESC
+    SELECT o.*, c.CUST_NAME as customer_name, c.CUST_EMAIL as customer_email
+    FROM `ORDER` o
+    JOIN CUSTOMER c ON o.CUST_ID = c.CUST_ID
+    ORDER BY o.ORDER_DATE DESC, o.ORDER_TIME DESC
     LIMIT 10
 ");
 $stmt->execute();
 $recentOrders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-// Recent users
+// Recent users (customers)
 $stmt = $conn->prepare("
-    SELECT id, name, email, role, created_at
-    FROM users
+    SELECT CUST_ID, CUST_NAME, CUST_EMAIL, MEMBERSHIP, created_at
+    FROM CUSTOMER
     ORDER BY created_at DESC
     LIMIT 5
 ");
@@ -150,12 +150,12 @@ $recentUsers = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                                                     <td><?php echo htmlspecialchars($order['customer_name']); ?></td>
                                                     <td><?php echo ucfirst($order['order_type']); ?></td>
                                                     <td>
-                                                        <span class="status-badge <?php echo $order['status']; ?>">
-                                                            <?php echo ucfirst($order['status']); ?>
+                                                        <span class="status-badge <?php echo $order['ORDER_STATUS']; ?>">
+                                                            <?php echo ucfirst($order['ORDER_STATUS']); ?>
                                                         </span>
                                                     </td>
-                                                    <td><?php echo formatCurrency($order['total_amount']); ?></td>
-                                                    <td><?php echo date('M d, Y', strtotime($order['created_at'])); ?></td>
+                                                    <td><?php echo formatCurrency($order['TOT_AMOUNT']); ?></td>
+                                                    <td><?php echo date('M d, Y', strtotime($order['ORDER_DATE'])); ?></td>
                                                 </tr>
                                             <?php endforeach; ?>
                                         <?php endif; ?>
@@ -189,11 +189,11 @@ $recentUsers = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                                         <?php else: ?>
                                             <?php foreach ($recentUsers as $user): ?>
                                                 <tr>
-                                                    <td><?php echo htmlspecialchars($user['name']); ?></td>
-                                                    <td><?php echo htmlspecialchars($user['email']); ?></td>
+                                                    <td><?php echo htmlspecialchars($user['CUST_NAME']); ?></td>
+                                                    <td><?php echo htmlspecialchars($user['CUST_EMAIL']); ?></td>
                                                     <td>
-                                                        <span class="role-badge <?php echo $user['role']; ?>">
-                                                            <?php echo ucfirst($user['role']); ?>
+                                                        <span class="role-badge customer">
+                                                            Customer
                                                         </span>
                                                     </td>
                                                     <td><?php echo date('M d, Y', strtotime($user['created_at'])); ?></td>

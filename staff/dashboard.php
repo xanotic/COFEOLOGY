@@ -11,22 +11,22 @@ if (!isStaff()) {
 
 // Get pending orders
 $stmt = $conn->prepare("
-    SELECT o.*, u.name as customer_name, u.phone as customer_phone
-    FROM orders o
-    JOIN users u ON o.user_id = u.id
-    WHERE o.status != 'completed' AND o.status != 'cancelled'
-    ORDER BY o.created_at DESC
+    SELECT o.*, c.CUST_NAME as customer_name, c.CUST_NPHONE as customer_phone
+    FROM `ORDER` o
+    JOIN CUSTOMER c ON o.CUST_ID = c.CUST_ID
+    WHERE o.ORDER_STATUS != 'completed' AND o.ORDER_STATUS != 'cancelled'
+    ORDER BY o.ORDER_DATE DESC, o.ORDER_TIME DESC
 ");
 $stmt->execute();
 $pendingOrders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
 // Get completed orders (last 10)
 $stmt = $conn->prepare("
-    SELECT o.*, u.name as customer_name
-    FROM orders o
-    JOIN users u ON o.user_id = u.id
-    WHERE o.status = 'completed'
-    ORDER BY o.created_at DESC
+    SELECT o.*, c.CUST_NAME as customer_name
+    FROM `ORDER` o
+    JOIN CUSTOMER c ON o.CUST_ID = c.CUST_ID
+    WHERE o.ORDER_STATUS = 'completed'
+    ORDER BY o.ORDER_DATE DESC, o.ORDER_TIME DESC
     LIMIT 10
 ");
 $stmt->execute();
@@ -81,7 +81,7 @@ $completedOrders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                             <?php 
                             $processingCount = 0;
                             foreach($pendingOrders as $order) {
-                                if($order['status'] === 'preparing') $processingCount++;
+                                if($order['ORDER_STATUS'] === 'preparing') $processingCount++;
                             }
                             echo $processingCount;
                             ?>
@@ -107,7 +107,7 @@ $completedOrders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                             <?php 
                             $readyCount = 0;
                             foreach($pendingOrders as $order) {
-                                if($order['status'] === 'ready') $readyCount++;
+                                if($order['ORDER_STATUS'] === 'ready') $readyCount++;
                             }
                             echo $readyCount;
                             ?>
@@ -146,27 +146,27 @@ $completedOrders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                                     <?php else: ?>
                                         <?php foreach ($pendingOrders as $order): ?>
                                             <tr>
-                                                <td>#<?php echo $order['id']; ?></td>
+                                                <td>#<?php echo $order['ORDER_ID']; ?></td>
                                                 <td>
                                                     <div class="customer-info">
                                                         <span><?php echo htmlspecialchars($order['customer_name']); ?></span>
                                                         <small><?php echo htmlspecialchars($order['customer_phone']); ?></small>
                                                     </div>
                                                 </td>
-                                                <td><?php echo ucfirst($order['order_type']); ?></td>
-                                                <td><?php echo date('h:i A', strtotime($order['created_at'])); ?></td>
+                                                <td><?php echo ucfirst($order['ORDER_TYPE']); ?></td>
+                                                <td><?php echo date('h:i A', strtotime($order['ORDER_DATE'] . ' ' . $order['ORDER_TIME'])); ?></td>
                                                 <td>
-                                                    <span class="status-badge <?php echo $order['status']; ?>">
-                                                        <?php echo ucfirst($order['status']); ?>
+                                                    <span class="status-badge <?php echo $order['ORDER_STATUS']; ?>">
+                                                        <?php echo ucfirst($order['ORDER_STATUS']); ?>
                                                     </span>
                                                 </td>
-                                                <td><?php echo formatCurrency($order['total_amount']); ?></td>
+                                                <td><?php echo formatCurrency($order['TOT_AMOUNT']); ?></td>
                                                 <td>
                                                     <div class="table-actions">
-                                                        <a href="order-details.php?id=<?php echo $order['id']; ?>" class="btn-icon" title="View Details">
+                                                        <a href="order-details.php?id=<?php echo $order['ORDER_ID']; ?>" class="btn-icon" title="View Details">
                                                             <i class="fas fa-eye"></i>
                                                         </a>
-                                                        <button class="btn-icon update-status" data-id="<?php echo $order['id']; ?>" title="Update Status">
+                                                        <button class="btn-icon update-status" data-id="<?php echo $order['ORDER_ID']; ?>" title="Update Status">
                                                             <i class="fas fa-edit"></i>
                                                         </button>
                                                     </div>
@@ -205,14 +205,14 @@ $completedOrders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                                     <?php else: ?>
                                         <?php foreach ($completedOrders as $order): ?>
                                             <tr>
-                                                <td>#<?php echo $order['id']; ?></td>
+                                                <td>#<?php echo $order['ORDER_ID']; ?></td>
                                                 <td><?php echo htmlspecialchars($order['customer_name']); ?></td>
-                                                <td><?php echo ucfirst($order['order_type']); ?></td>
-                                                <td><?php echo date('d M Y, h:i A', strtotime($order['created_at'])); ?></td>
-                                                <td><?php echo formatCurrency($order['total_amount']); ?></td>
+                                                <td><?php echo ucfirst($order['ORDER_TYPE']); ?></td>
+                                                <td><?php echo date('d M Y, h:i A', strtotime($order['ORDER_DATE'] . ' ' . $order['ORDER_TIME'])); ?></td>
+                                                <td><?php echo formatCurrency($order['TOT_AMOUNT']); ?></td>
                                                 <td>
                                                     <div class="table-actions">
-                                                        <a href="order-details.php?id=<?php echo $order['id']; ?>" class="btn-icon" title="View Details">
+                                                        <a href="order-details.php?id=<?php echo $order['ORDER_ID']; ?>" class="btn-icon" title="View Details">
                                                             <i class="fas fa-eye"></i>
                                                         </a>
                                                     </div>

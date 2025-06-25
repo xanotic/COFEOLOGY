@@ -5,18 +5,18 @@ session_start();
 include 'includes/db_connect.php';
 include 'includes/functions.php';
 
-// Redirect if not logged in
-if (!isLoggedIn()) {
+// Redirect if not logged in or not a customer
+if (!isLoggedIn() || !isCustomer()) {
     $_SESSION['redirect_url'] = 'checkout.php';
     header("Location: login.php");
     exit();
 }
 
-// Get user information
-$stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
+// Get customer information
+$stmt = $conn->prepare("SELECT * FROM CUSTOMER WHERE CUST_ID = ?");
 $stmt->bind_param("i", $_SESSION['user_id']);
 $stmt->execute();
-$user = $stmt->get_result()->fetch_assoc();
+$customer = $stmt->get_result()->fetch_assoc();
 
 $errors = [];
 $success = false;
@@ -61,7 +61,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $conn->begin_transaction();
         
         try {
-            // Create order - FIXED parameter order
+            // Create order
             $order_id = createOrder(
                 $conn, 
                 $_SESSION['user_id'], 
@@ -73,9 +73,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             );
             
             if ($order_id) {
-                // Add order details
+                // Add order listings
                 foreach ($cart_items as $item) {
-                    addOrderDetail(
+                    addOrderListing(
                         $conn, 
                         $order_id, 
                         $item['id'], 
@@ -83,10 +83,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         $item['price'], 
                         $item['special_requests'] ?? null
                     );
+                    
+                    // Update stock level
+                    updateStockLevel($conn, $item['id'], $item['quantity']);
                 }
                 
                 // Log activity
-                logActivity($conn, $_SESSION['user_id'], 'order_placed', "Order #$order_id placed");
+                logActivity($conn, $_SESSION['user_id'], 'customer', 'order_placed', "Order #$order_id placed");
                 
                 $conn->commit();
                 
@@ -163,7 +166,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             
                             <div id="delivery-address-section" class="form-group" style="display: none;">
                                 <label for="delivery_address" class="form-label">Delivery Address</label>
-                                <textarea id="delivery_address" name="delivery_address" class="form-control" rows="3"><?php echo htmlspecialchars($user['address'] ?? ''); ?></textarea>
+                                <textarea id="delivery_address" name="delivery_address" class="form-control" rows="3"><?php echo htmlspecialchars($customer['CUST_ADDRESS'] ?? ''); ?></textarea>
                             </div>
                             
                             <div id="pickup-time-section" class="form-group" style="display: none;">
@@ -182,15 +185,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <div class="form-group">
                                 <label class="form-label">Contact Information</label>
                                 <div class="contact-info">
-                                    <p><strong>Name:</strong> <?php echo htmlspecialchars($user['name']); ?></p>
-                                    <p><strong>Email:</strong> <?php echo htmlspecialchars($user['email']); ?></p>
-                                    <p><strong>Phone:</strong> <?php echo htmlspecialchars($user['phone']); ?></p>
+                                    <p><strong>Name:</strong> <?php echo htmlspecialchars($customer['CUST_NAME']); ?></p>
+                                    <p><strong>Email:</strong> <?php echo htmlspecialchars($customer['CUST_EMAIL']); ?></p>
+                                    <p><strong>Phone:</strong> <?php echo htmlspecialchars($customer['CUST_NPHONE']); ?></p>
+                                    <p><strong>Membership:</strong> <?php echo ucfirst($customer['MEMBERSHIP']); ?></p>
                                 </div>
-                            </div>
-                            
-                            <div class="form-check">
-                                <input type="checkbox" id="join_membership" name="join_membership" class="form-check-input">
-                                <label for="join_membership" class="form-check-label">Join our membership program for exclusive discounts and rewards</label>
                             </div>
                             
                             <input type="hidden" id="cart_items" name="cart_items">
@@ -217,6 +216,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <span>Delivery Fee</span>
                                 <span>RM 5.00</span>
                             </div>
+                            <div class="summary-row" id="membership-discount-row" style="display: none;">
+                                <span>Membership Discount</span>
+                                <span id="discount-amount">-RM 0.00</span>
+                            </div>
                             <div class="summary-row summary-total">
                                 <span>Total</span>
                                 <span id="checkout-total">RM 0.00</span>
@@ -240,6 +243,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             const deliveryAddressSection = document.getElementById('delivery-address-section');
             const pickupTimeSection = document.getElementById('pickup-time-section');
             const deliveryFeeRow = document.getElementById('delivery-fee-row');
+            const membershipDiscountRow = document.getElementById('membership-discount-row');
             
             orderTypeInputs.forEach(input => {
                 input.addEventListener('change', function() {
@@ -247,11 +251,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         deliveryAddressSection.style.display = 'block';
                         pickupTimeSection.style.display = 'none';
                         deliveryFeeRow.style.display = 'flex';
+                        membershipDiscountRow.style.display = 'none';
                         updateTotal(true);
                     } else {
                         deliveryAddressSection.style.display = 'none';
                         pickupTimeSection.style.display = 'block';
                         deliveryFeeRow.style.display = 'none';
+                        membershipDiscountRow.style.display = 'none';
                         updateTotal(false);
                     }
                 });
@@ -324,15 +330,39 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             
             // Update totals
             document.getElementById('checkout-subtotal').textContent = formatCurrency(subtotal);
+            
+            // Apply membership discount
+            const membershipType = '<?php echo $customer['MEMBERSHIP']; ?>';
+            let discountRate = 0;
+            if (membershipType === 'premium') {
+                discountRate = 0.10; // 10% discount
+            } else if (membershipType === 'vip') {
+                discountRate = 0.20; // 20% discount
+            }
+            
+            if (discountRate > 0) {
+                const discountAmount = subtotal * discountRate;
+                document.getElementById('membership-discount-row').style.display = 'flex';
+                document.getElementById('discount-amount').textContent = '-' + formatCurrency(discountAmount);
+                subtotal -= discountAmount;
+            }
+            
             updateTotal(true); // Default to delivery
             
             // Set hidden inputs
             document.getElementById('cart_items').value = JSON.stringify(cart);
-            document.getElementById('total_amount').value = subtotal + 5; // Include delivery fee by default
         }
         
         function updateTotal(includeDeliveryFee) {
-            const subtotal = parseFloat(document.getElementById('checkout-subtotal').textContent.replace('RM ', ''));
+            const subtotalText = document.getElementById('checkout-subtotal').textContent.replace('RM ', '');
+            const discountText = document.getElementById('discount-amount').textContent.replace('-RM ', '');
+            
+            let subtotal = parseFloat(subtotalText);
+            const discount = parseFloat(discountText) || 0;
+            
+            // Apply discount to subtotal
+            subtotal -= discount;
+            
             const deliveryFee = includeDeliveryFee ? 5 : 0;
             const total = subtotal + deliveryFee;
             

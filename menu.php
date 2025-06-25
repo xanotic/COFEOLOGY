@@ -4,13 +4,13 @@ include 'includes/db_connect.php';
 include 'includes/functions.php';
 
 // Get all menu categories
-$stmt = $conn->prepare("SELECT DISTINCT category FROM menu_items WHERE active = 1");
+$stmt = $conn->prepare("SELECT DISTINCT ITEM_CATEGORY FROM MENU_ITEM WHERE active = 1");
 $stmt->execute();
 $result = $stmt->get_result();
 
 $categories = [];
 while ($row = $result->fetch_assoc()) {
-    $categories[] = $row['category'];
+    $categories[] = $row['ITEM_CATEGORY'];
 }
 
 // Get all menu items
@@ -49,23 +49,35 @@ $menuItems = getMenuItems($conn);
                 
                 <div class="menu-grid">
                     <?php foreach ($menuItems as $item): ?>
-                        <div class="menu-item" data-category="<?php echo htmlspecialchars($item['category']); ?>">
+                        <div class="menu-item" data-category="<?php echo htmlspecialchars($item['ITEM_CATEGORY']); ?>">
                             <div class="menu-item-image">
-                                <img src="<?php echo !empty($item['image']) ? htmlspecialchars($item['image']) : 'images/placeholder.jpg'; ?>" alt="<?php echo htmlspecialchars($item['name']); ?>">
+                                <img src="<?php echo !empty($item['image']) ? htmlspecialchars($item['image']) : '/placeholder.svg?height=200&width=280'; ?>" alt="<?php echo htmlspecialchars($item['ITEM_NAME']); ?>">
+                                <?php if ($item['STOCK_LEVEL'] <= 5): ?>
+                                    <div class="stock-warning">Low Stock</div>
+                                <?php endif; ?>
                             </div>
                             <div class="menu-item-content">
                                 <div class="menu-item-title">
-                                    <h3><?php echo htmlspecialchars($item['name']); ?></h3>
-                                    <div class="menu-item-price"><?php echo formatCurrency($item['price']); ?></div>
+                                    <h3><?php echo htmlspecialchars($item['ITEM_NAME']); ?></h3>
+                                    <div class="menu-item-price"><?php echo formatCurrency($item['ITEM_PRICE']); ?></div>
                                 </div>
                                 <div class="menu-item-description">
-                                    <?php echo htmlspecialchars($item['description']); ?>
+                                    <?php echo htmlspecialchars($item['ITEM_DESCRIPTION']); ?>
+                                </div>
+                                <div class="menu-item-stock">
+                                    <span class="stock-level">Stock: <?php echo $item['STOCK_LEVEL']; ?></span>
                                 </div>
                                 <div class="menu-item-actions">
-                                    <button class="btn btn-primary btn-sm" onclick="addToCart(<?php echo $item['id']; ?>, '<?php echo addslashes($item['name']); ?>', <?php echo $item['price']; ?>, '<?php echo !empty($item['image']) ? addslashes($item['image']) : 'images/placeholder.jpg'; ?>')">
-                                        Add to Cart
-                                    </button>
-                                    <button class="btn btn-outline btn-sm" onclick="showItemDetails(<?php echo $item['id']; ?>)">
+                                    <?php if ($item['STOCK_LEVEL'] > 0): ?>
+                                        <button class="btn btn-primary btn-sm" onclick="addToCart(<?php echo $item['ITEM_ID']; ?>, '<?php echo addslashes($item['ITEM_NAME']); ?>', <?php echo $item['ITEM_PRICE']; ?>, '<?php echo !empty($item['image']) ? addslashes($item['image']) : '/placeholder.svg?height=200&width=280'; ?>')">
+                                            Add to Cart
+                                        </button>
+                                    <?php else: ?>
+                                        <button class="btn btn-secondary btn-sm" disabled>
+                                            Out of Stock
+                                        </button>
+                                    <?php endif; ?>
+                                    <button class="btn btn-outline btn-sm" onclick="showItemDetails(<?php echo $item['ITEM_ID']; ?>)">
                                         Details
                                     </button>
                                 </div>
@@ -86,5 +98,32 @@ $menuItems = getMenuItems($conn);
             window.location.href = 'item-details.php?id=' + itemId;
         }
     </script>
+    
+    <style>
+        .stock-warning {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #ff6b6b;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .menu-item-stock {
+            margin-bottom: 15px;
+        }
+        
+        .stock-level {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .menu-item-image {
+            position: relative;
+        }
+    </style>
 </body>
 </html>

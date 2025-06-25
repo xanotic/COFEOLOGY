@@ -7,7 +7,7 @@ $errors = [];
 $success = false;
 
 // Check if user is already logged in
-if (isset($_SESSION['user_id'])) {
+if (isLoggedIn()) {
     header("Location: index.php");
     exit();
 }
@@ -20,7 +20,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = $_POST['password'];
     $confirm_password = $_POST['confirm_password'];
     $phone = trim($_POST['phone']);
-    $address = trim($_POST['address']);
+    $membership = $_POST['membership'] ?? 'basic';
     
     // Validation
     if (empty($name)) {
@@ -32,12 +32,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $errors[] = "Invalid email format";
     } else {
-        // Check if email already exists
-        $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
+        // Check if email already exists in any table
+        $customer = getCustomerByEmail($conn, $email);
+        $staff = getStaffByEmail($conn, $email);
+        $stmt = $conn->prepare("SELECT ADM_ID FROM ADMIN WHERE ADM_EMAIL = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
-        $result = $stmt->get_result();
-        if ($result->num_rows > 0) {
+        $admin_exists = $stmt->get_result()->num_rows > 0;
+        $stmt->close();
+        
+        if ($customer || $staff || $admin_exists) {
             $errors[] = "Email already exists";
         }
     }
@@ -56,23 +60,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $errors[] = "Phone number is required";
     }
     
-    if (empty($address)) {
-        $errors[] = "Address is required";
-    }
-    
-    // If no errors, register the user
+    // If no errors, register the customer
     if (empty($errors)) {
-        $user_id = registerUser($conn, $name, $email, $password, $phone, $address);
+        $user_id = registerCustomer($conn, $name, $email, $password, $phone, $membership);
         
         if ($user_id) {
             // Log the activity
-            logActivity($conn, $user_id, 'user_registered', 'User registered successfully');
+            logActivity($conn, $user_id, 'customer', 'user_registered', 'Customer registered successfully');
             
             // Set session variables
             $_SESSION['user_id'] = $user_id;
             $_SESSION['user_name'] = $name;
             $_SESSION['user_email'] = $email;
-            $_SESSION['user_role'] = 'customer';
+            $_SESSION['user_type'] = 'customer';
             
             // Redirect to home page
             header("Location: index.php");
@@ -98,7 +98,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <main>
         <section class="page-header">
             <div class="container">
-                <h1>Create an Account</h1>
+                <h1>Create Customer Account</h1>
             </div>
         </section>
         
@@ -127,6 +127,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         </div>
                         
                         <div class="form-group">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" id="phone" name="phone" class="form-control" value="<?php echo isset($_POST['phone']) ? htmlspecialchars($_POST['phone']) : ''; ?>" required>
+                        </div>
+                        
+                        <div class="form-group">
                             <label for="password" class="form-label">Password</label>
                             <input type="password" id="password" name="password" class="form-control" required>
                             <div class="form-text">Password must be at least 6 characters long.</div>
@@ -138,13 +143,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         </div>
                         
                         <div class="form-group">
-                            <label for="phone" class="form-label">Phone Number</label>
-                            <input type="tel" id="phone" name="phone" class="form-control" value="<?php echo isset($_POST['phone']) ? htmlspecialchars($_POST['phone']) : ''; ?>" required>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="address" class="form-label">Delivery Address</label>
-                            <textarea id="address" name="address" class="form-control" rows="3" required><?php echo isset($_POST['address']) ? htmlspecialchars($_POST['address']) : ''; ?></textarea>
+                            <label for="membership" class="form-label">Membership Type</label>
+                            <select id="membership" name="membership" class="form-control">
+                                <option value="basic">Basic (Free)</option>
+                                <option value="premium">Premium (RM 50/year - 10% discount)</option>
+                                <option value="vip">VIP (RM 100/year - 20% discount + priority)</option>
+                            </select>
                         </div>
                         
                         <div class="form-check">
@@ -168,5 +172,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <?php include 'includes/footer.php'; ?>
     
     <script src="js/main.js"></script>
+    <style>
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .alert ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+    </style>
 </body>
 </html>

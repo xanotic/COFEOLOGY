@@ -11,18 +11,18 @@ if (!isStaff()) {
 
 // Get all orders (staff can see all orders)
 $stmt = $conn->prepare("
-    SELECT o.*, u.name as customer_name, u.email as customer_email, u.phone as customer_phone
-    FROM orders o
-    JOIN users u ON o.user_id = u.id
+    SELECT o.*, c.name as customer_name, c.email as customer_email, c.phone as customer_phone
+    FROM `ORDER` o
+    JOIN CUSTOMER c ON o.customer_id = c.customer_id
     ORDER BY 
         CASE 
-            WHEN o.status = 'pending' THEN 1
-            WHEN o.status = 'preparing' THEN 2
-            WHEN o.status = 'ready' THEN 3
-            WHEN o.status = 'out_for_delivery' THEN 4
+            WHEN o.order_status = 'pending' THEN 1
+            WHEN o.order_status = 'preparing' THEN 2
+            WHEN o.order_status = 'ready' THEN 3
+            WHEN o.order_status = 'out_for_delivery' THEN 4
             ELSE 5
         END,
-        o.created_at DESC
+        o.order_date DESC
 ");
 $stmt->execute();
 $orders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -32,12 +32,12 @@ $today = date('Y-m-d');
 $stmt = $conn->prepare("
     SELECT 
         COUNT(*) as total_today,
-        COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_today,
-        COUNT(CASE WHEN status = 'preparing' THEN 1 END) as preparing_today,
-        COUNT(CASE WHEN status = 'ready' THEN 1 END) as ready_today,
-        COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_today
-    FROM orders 
-    WHERE DATE(created_at) = ?
+        COUNT(CASE WHEN order_status = 'pending' THEN 1 END) as pending_today,
+        COUNT(CASE WHEN order_status = 'preparing' THEN 1 END) as preparing_today,
+        COUNT(CASE WHEN order_status = 'ready' THEN 1 END) as ready_today,
+        COUNT(CASE WHEN order_status = 'completed' THEN 1 END) as completed_today
+    FROM `ORDER`
+    WHERE DATE(order_date) = ?
 ");
 $stmt->bind_param("s", $today);
 $stmt->execute();
@@ -156,13 +156,13 @@ $todayStats = $stmt->get_result()->fetch_assoc();
                                     </tr>
                                 <?php else: ?>
                                     <?php foreach ($orders as $order): ?>
-                                        <tr data-status="<?php echo $order['status']; ?>" 
+                                        <tr data-status="<?php echo $order['order_status']; ?>" 
                                             data-type="<?php echo $order['order_type']; ?>" 
-                                            data-date="<?php echo date('Y-m-d', strtotime($order['created_at'])); ?>"
-                                            class="order-row <?php echo $order['status']; ?>">
+                                            data-date="<?php echo date('Y-m-d', strtotime($order['order_date'])); ?>"
+                                            class="order-row <?php echo $order['order_status']; ?>">
                                             <td>
-                                                <strong>#<?php echo $order['id']; ?></strong>
-                                                <?php if ($order['status'] === 'pending'): ?>
+                                                <strong>#<?php echo $order['order_id']; ?></strong>
+                                                <?php if ($order['order_status'] === 'pending'): ?>
                                                     <span class="urgent-badge">NEW</span>
                                                 <?php endif; ?>
                                             </td>
@@ -184,28 +184,28 @@ $todayStats = $stmt->get_result()->fetch_assoc();
                                                 </span>
                                             </td>
                                             <td>
-                                                <span class="status-badge <?php echo $order['status']; ?>">
-                                                    <?php echo ucfirst(str_replace('_', ' ', $order['status'])); ?>
+                                                <span class="status-badge <?php echo $order['order_status']; ?>">
+                                                    <?php echo ucfirst(str_replace('_', ' ', $order['order_status'])); ?>
                                                 </span>
                                             </td>
                                             <td><?php echo formatCurrency($order['total_amount']); ?></td>
                                             <td>
                                                 <div class="time-info">
-                                                    <span><?php echo date('h:i A', strtotime($order['created_at'])); ?></span>
-                                                    <small><?php echo date('M d', strtotime($order['created_at'])); ?></small>
+                                                    <span><?php echo date('h:i A', strtotime($order['order_date'])); ?></span>
+                                                    <small><?php echo date('M d', strtotime($order['order_date'])); ?></small>
                                                 </div>
                                             </td>
                                             <td>
                                                 <div class="table-actions">
-                                                    <a href="order-details.php?id=<?php echo $order['id']; ?>" class="btn-icon" title="View Details">
+                                                    <a href="order-details.php?id=<?php echo $order['order_id']; ?>" class="btn-icon" title="View Details">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
-                                                    <?php if ($order['status'] !== 'completed' && $order['status'] !== 'cancelled'): ?>
-                                                        <button class="btn-icon update-status" data-id="<?php echo $order['id']; ?>" data-current="<?php echo $order['status']; ?>" title="Update Status">
+                                                    <?php if ($order['order_status'] !== 'completed' && $order['order_status'] !== 'cancelled'): ?>
+                                                        <button class="btn-icon update-status" data-id="<?php echo $order['order_id']; ?>" data-current="<?php echo $order['order_status']; ?>" title="Update Status">
                                                             <i class="fas fa-edit"></i>
                                                         </button>
                                                     <?php endif; ?>
-                                                    <button class="btn-icon print-order" data-id="<?php echo $order['id']; ?>" title="Print Order">
+                                                    <button class="btn-icon print-order" data-id="<?php echo $order['order_id']; ?>" title="Print Order">
                                                         <i class="fas fa-print"></i>
                                                     </button>
                                                 </div>
@@ -473,7 +473,7 @@ $todayStats = $stmt->get_result()->fetch_assoc();
                 },
                 body: JSON.stringify({
                     order_id: orderId,
-                    status: status
+                    order_status: status
                 })
             })
             .then(response => response.json())

@@ -1,56 +1,68 @@
 <?php
-header('Content-Type: application/json');
 session_start();
+include '../includes/db_connect.php';
+include '../includes/functions.php';
 
-// Enable error reporting
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// Set content type to JSON
+header('Content-Type: application/json');
+
+// Check if user is logged in and has permission
+if (!isLoggedIn() || (!isAdmin() && !isStaff())) {
+    echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
+    exit();
+}
+
+// Check if request method is POST
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    echo json_encode(['success' => false, 'message' => 'Invalid request method']);
+    exit();
+}
+
+// Get JSON input
+$input = json_decode(file_get_contents('php://input'), true);
+
+// Validate input
+if (!isset($input['order_id']) || !isset($input['status'])) {
+    echo json_encode(['success' => false, 'message' => 'Missing required parameters']);
+    exit();
+}
+
+$order_id = intval($input['order_id']);
+$status = $input['status'];
+
+// Validate status
+$valid_statuses = ['pending', 'preparing', 'ready', 'out_for_delivery', 'completed', 'cancelled'];
+if (!in_array($status, $valid_statuses)) {
+    echo json_encode(['success' => false, 'message' => 'Invalid status']);
+    exit();
+}
 
 try {
-    // Include database connection and functions
-    include '../includes/db_connect.php';
-    include '../includes/functions.php';
-    
-    // Check if user is staff
-    if (!isStaff()) {
-        throw new Exception("Unauthorized access");
-    }
-    
-    // Get JSON input
-    $input = json_decode(file_get_contents('php://input'), true);
-    
-    if (!$input || !isset($input['order_id']) || !isset($input['status'])) {
-        throw new Exception("Missing required parameters");
-    }
-    
-    $order_id = intval($input['order_id']);
-    $status = $input['status'];
-    
-    // Validate status
-    $valid_statuses = ['pending', 'preparing', 'ready', 'out_for_delivery', 'completed', 'cancelled'];
-    if (!in_array($status, $valid_statuses)) {
-        throw new Exception("Invalid status");
-    }
-    
     // Update order status
-    $result = updateOrderStatus($conn, $order_id, $status);
+    $stmt = $conn->prepare("UPDATE `ORDER` SET ORDER_STATUS = ? WHERE ORDER_ID = ?");
+    $stmt->bind_param("si", $status, $order_id);
     
-    if ($result) {
-        // Log activity
-        logActivity($conn, $_SESSION['user_id'], 'order_status_updated', "Order #$order_id status updated to $status");
+    if ($stmt->execute()) {
+        // Log the activity
+        logActivity($conn, $_SESSION['user_id'], $_SESSION['user_type'], 'order_status_updated', "Order #$order_id status changed to $status");
         
-        echo json_encode([
-            'success' => true,
-            'message' => 'Order status updated successfully'
-        ]);
+        // If staff is updating, assign them to the order
+        if ($_SESSION['user_type'] === 'staff') {
+            $assign_stmt = $conn->prepare("UPDATE `ORDER` SET STAFF_ID = ? WHERE ORDER_ID = ?");
+            $assign_stmt->bind_param("ii", $_SESSION['user_id'], $order_id);
+            $assign_stmt->execute();
+            $assign_stmt->close();
+        }
+        
+        echo json_encode(['success' => true, 'message' => 'Order status updated successfully']);
     } else {
-        throw new Exception("Failed to update order status");
+        echo json_encode(['success' => false, 'message' => 'Failed to update order status']);
     }
     
+    $stmt->close();
 } catch (Exception $e) {
-    echo json_encode([
-        'success' => false,
-        'message' => $e->getMessage()
-    ]);
+    echo json_encode(['success' => false, 'message' => 'Database error: ' . $e->getMessage()]);
 }
+
+$conn->close();
 ?>

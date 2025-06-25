@@ -11,10 +11,10 @@ if (!isAdmin()) {
 
 // Get all orders
 $stmt = $conn->prepare("
-    SELECT o.*, u.name as customer_name, u.email as customer_email, u.phone as customer_phone
-    FROM orders o
-    JOIN users u ON o.user_id = u.id
-    ORDER BY o.created_at DESC
+    SELECT o.*, c.CUST_NAME as customer_name, c.CUST_EMAIL as customer_email, c.CUST_NPHONE as customer_phone
+    FROM `ORDER` o
+    JOIN CUSTOMER c ON o.CUST_ID = c.CUST_ID
+    ORDER BY o.ORDER_DATE DESC, o.ORDER_TIME DESC
 ");
 $stmt->execute();
 $orders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -84,8 +84,8 @@ $orders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                                     </tr>
                                 <?php else: ?>
                                     <?php foreach ($orders as $order): ?>
-                                        <tr data-status="<?php echo $order['status']; ?>" data-date="<?php echo date('Y-m-d', strtotime($order['created_at'])); ?>">
-                                            <td>#<?php echo $order['id']; ?></td>
+                                        <tr data-status="<?php echo $order['ORDER_STATUS']; ?>" data-date="<?php echo $order['ORDER_DATE']; ?>">
+                                            <td>#<?php echo $order['ORDER_ID']; ?></td>
                                             <td>
                                                 <div class="customer-info">
                                                     <span><?php echo htmlspecialchars($order['customer_name']); ?></span>
@@ -93,10 +93,10 @@ $orders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                                                 </div>
                                             </td>
                                             <td><?php echo htmlspecialchars($order['customer_phone']); ?></td>
-                                            <td><?php echo ucfirst($order['order_type']); ?></td>
+                                            <td><?php echo ucfirst($order['ORDER_TYPE']); ?></td>
                                             <td>
-                                                <span class="status-badge <?php echo $order['status']; ?>">
-                                                    <?php echo ucfirst($order['status']); ?>
+                                                <span class="status-badge <?php echo $order['ORDER_STATUS']; ?>">
+                                                    <?php echo ucfirst($order['ORDER_STATUS']); ?>
                                                 </span>
                                             </td>
                                             <td>
@@ -104,14 +104,14 @@ $orders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                                                     <?php echo ucfirst($order['payment_status']); ?>
                                                 </span>
                                             </td>
-                                            <td><?php echo formatCurrency($order['total_amount']); ?></td>
-                                            <td><?php echo date('M d, Y h:i A', strtotime($order['created_at'])); ?></td>
+                                            <td><?php echo formatCurrency($order['TOT_AMOUNT']); ?></td>
+                                            <td><?php echo date('M d, Y h:i A', strtotime($order['ORDER_DATE'] . ' ' . $order['ORDER_TIME'])); ?></td>
                                             <td>
                                                 <div class="table-actions">
-                                                    <a href="order-details.php?id=<?php echo $order['id']; ?>" class="btn-icon" title="View Details">
+                                                    <a href="order-details.php?id=<?php echo $order['ORDER_ID']; ?>" class="btn-icon" title="View Details">
                                                         <i class="fas fa-eye"></i>
                                                     </a>
-                                                    <button class="btn-icon update-status" data-id="<?php echo $order['id']; ?>" title="Update Status">
+                                                    <button class="btn-icon update-status" data-id="<?php echo $order['ORDER_ID']; ?>" title="Update Status">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
                                                 </div>

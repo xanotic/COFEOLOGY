@@ -22,8 +22,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $price = floatval($_POST['price']);
                 $category = $_POST['category'];
                 $image = $_POST['image'] ?? '';
+                $stock_level = intval($_POST['stock_level']);
+                $admin_id = $_SESSION['admin_id'];
                 
-                if (addMenuItem($conn, $name, $description, $price, $category, $image)) {
+                if (addMenuItem($conn, $name, $description, $price, $category, $image, $admin_id, $stock_level)) {
                     $message = "Menu item added successfully!";
                 } else {
                     $error = "Failed to add menu item.";
@@ -38,8 +40,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $category = $_POST['category'];
                 $active = isset($_POST['active']) ? 1 : 0;
                 $image = $_POST['image'] ?? '';
+                $stock_level = intval($_POST['stock_level']);
                 
-                if (updateMenuItem($conn, $id, $name, $description, $price, $category, $active, $image)) {
+                if (updateMenuItem($conn, $id, $name, $description, $price, $category, $active, $image, $stock_level)) {
                     $message = "Menu item updated successfully!";
                 } else {
                     $error = "Failed to update menu item.";
@@ -48,7 +51,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 
             case 'delete':
                 $id = intval($_POST['id']);
-                $stmt = $conn->prepare("DELETE FROM menu_items WHERE id = ?");
+                $stmt = $conn->prepare("DELETE FROM " . MENU_ITEM . " WHERE " . ITEM_ID . " = ?");
                 $stmt->bind_param("i", $id);
                 if ($stmt->execute()) {
                     $message = "Menu item deleted successfully!";
@@ -61,12 +64,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 
 // Get all menu items
-$stmt = $conn->prepare("SELECT * FROM menu_items ORDER BY category, name");
+$stmt = $conn->prepare("SELECT * FROM " . MENU_ITEM . " ORDER BY " . ITEM_CATEGORY . ", " . ITEM_NAME);
 $stmt->execute();
 $menuItems = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
 // Get categories
-$categories = array_unique(array_column($menuItems, 'category'));
+$categories = array_unique(array_column($menuItems, ITEM_CATEGORY));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -125,26 +128,28 @@ $categories = array_unique(array_column($menuItems, 'category'));
                                     <th>Name</th>
                                     <th>Category</th>
                                     <th>Price</th>
+                                    <th>Stock</th>
                                     <th>Status</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="menu-table">
                                 <?php foreach ($menuItems as $item): ?>
-                                    <tr data-category="<?php echo htmlspecialchars($item['category']); ?>">
+                                    <tr data-category="<?php echo htmlspecialchars($item[ITEM_CATEGORY]); ?>">
                                         <td>
                                             <div class="menu-item-image-small">
-                                                <img src="<?php echo !empty($item['image']) ? htmlspecialchars($item['image']) : '/placeholder.svg?height=50&width=50'; ?>" alt="<?php echo htmlspecialchars($item['name']); ?>">
+                                                <img src="<?php echo !empty($item['image']) ? htmlspecialchars($item['image']) : '/placeholder.svg?height=50&width=50'; ?>" alt="<?php echo htmlspecialchars($item[ITEM_NAME]); ?>">
                                             </div>
                                         </td>
                                         <td>
                                             <div class="menu-item-info">
-                                                <strong><?php echo htmlspecialchars($item['name']); ?></strong>
-                                                <p><?php echo htmlspecialchars($item['description']); ?></p>
+                                                <strong><?php echo htmlspecialchars($item[ITEM_NAME]); ?></strong>
+                                                <p><?php echo htmlspecialchars($item[ITEM_DESCRIPTION]); ?></p>
                                             </div>
                                         </td>
-                                        <td><?php echo htmlspecialchars($item['category']); ?></td>
-                                        <td><?php echo formatCurrency($item['price']); ?></td>
+                                        <td><?php echo htmlspecialchars($item[ITEM_CATEGORY]); ?></td>
+                                        <td><?php echo formatCurrency($item[ITEM_PRICE]); ?></td>
+                                        <td><?php echo htmlspecialchars($item['stock_level']); ?></td>
                                         <td>
                                             <span class="status-badge <?php echo $item['active'] ? 'active' : 'inactive'; ?>">
                                                 <?php echo $item['active'] ? 'Active' : 'Inactive'; ?>
@@ -155,7 +160,7 @@ $categories = array_unique(array_column($menuItems, 'category'));
                                                 <button class="btn-icon" onclick="editItem(<?php echo htmlspecialchars(json_encode($item)); ?>)" title="Edit">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
-                                                <button class="btn-icon" onclick="deleteItem(<?php echo $item['id']; ?>)" title="Delete">
+                                                <button class="btn-icon" onclick="deleteItem(<?php echo $item[ITEM_ID]; ?>)" title="Delete">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </div>
@@ -210,6 +215,11 @@ $categories = array_unique(array_column($menuItems, 'category'));
                     <div class="form-group">
                         <label for="image" class="form-label">Image URL</label>
                         <input type="url" id="image" name="image" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="stock_level" class="form-label">Stock Level</label>
+                        <input type="number" id="stock_level" name="stock_level" class="form-control" value="1" required>
                     </div>
                     
                     <div class="form-group" id="active-group" style="display: none;">
@@ -335,12 +345,13 @@ $categories = array_unique(array_column($menuItems, 'category'));
         function editItem(item) {
             document.getElementById('modal-title').textContent = 'Edit Menu Item';
             document.getElementById('form-action').value = 'update';
-            document.getElementById('item-id').value = item.id;
-            document.getElementById('name').value = item.name;
-            document.getElementById('description').value = item.description;
-            document.getElementById('price').value = item.price;
-            document.getElementById('category').value = item.category;
+            document.getElementById('item-id').value = item.ITEM_ID;
+            document.getElementById('name').value = item.ITEM_NAME;
+            document.getElementById('description').value = item.ITEM_DESCRIPTION;
+            document.getElementById('price').value = item.ITEM_PRICE;
+            document.getElementById('category').value = item.ITEM_CATEGORY;
             document.getElementById('image').value = item.image || '';
+            document.getElementById('stock_level').value = item.stock_level;
             document.getElementById('active').checked = item.active == 1;
             document.getElementById('active-group').style.display = 'block';
             document.getElementById('item-modal').style.display = 'flex';
