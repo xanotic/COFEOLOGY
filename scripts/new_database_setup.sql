@@ -2,119 +2,140 @@
 DROP DATABASE IF EXISTS cafe_ordering_system;
 CREATE DATABASE cafe_ordering_system;
 USE cafe_ordering_system;
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Host: 127.0.0.1
+-- Generation Time: Jun 25, 2025 at 09:07 PM
+-- Server version: 10.4.32-MariaDB
+-- PHP Version: 8.2.12
 
--- Create CUSTOMER table
-CREATE TABLE CUSTOMER (
-    CUST_ID INT AUTO_INCREMENT PRIMARY KEY,
-    CUST_NAME VARCHAR(100) NOT NULL,
-    CUST_NPHONE VARCHAR(20) NOT NULL,
-    CUST_EMAIL VARCHAR(100) UNIQUE NOT NULL,
-    CUST_PASSWORD VARCHAR(255) NOT NULL,
-    MEMBERSHIP ENUM('basic', 'premium', 'vip') DEFAULT 'basic',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
 
--- Create STAFF table
-CREATE TABLE STAFF (
-    STAFF_ID INT AUTO_INCREMENT PRIMARY KEY,
-    STAFF_NAME VARCHAR(100) NOT NULL,
-    STAFF_PNUMBER VARCHAR(20) NOT NULL,
-    STAFF_EMAIL VARCHAR(100) UNIQUE NOT NULL,
-    STAFF_PASSWORD VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
 
--- Create ADMIN table
-CREATE TABLE ADMIN (
-    ADM_ID INT AUTO_INCREMENT PRIMARY KEY,
-    ADM_USERNAME VARCHAR(50) UNIQUE NOT NULL,
-    ADM_PASSWORD VARCHAR(255) NOT NULL,
-    ADM_EMAIL VARCHAR(100) UNIQUE NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
 
--- Create MENU_ITEM table
-CREATE TABLE MENU_ITEM (
-    ITEM_ID INT AUTO_INCREMENT PRIMARY KEY,
-    ITEM_NAME VARCHAR(100) NOT NULL,
-    ITEM_PRICE DECIMAL(10, 2) NOT NULL,
-    ITEM_DESCRIPTION TEXT,
-    ITEM_CATEGORY VARCHAR(50) NOT NULL,
-    STOCK_LEVEL INT DEFAULT 0,
-    ADMIN_ID INT,
-    image VARCHAR(255),
-    active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (ADMIN_ID) REFERENCES ADMIN(ADM_ID) ON DELETE SET NULL
-);
+--
+-- Database: `cafe_ordering_system`
+--
 
--- Create ORDER table
-CREATE TABLE `ORDER` (
-    ORDER_ID INT AUTO_INCREMENT PRIMARY KEY,
-    ORDER_TIME TIME NOT NULL,
-    ORDER_DATE DATE NOT NULL,
-    ORDER_TYPE ENUM('delivery', 'takeaway', 'dine-in') NOT NULL,
-    ORDER_STATUS ENUM('pending', 'preparing', 'ready', 'out_for_delivery', 'completed', 'cancelled') DEFAULT 'pending',
-    TOT_AMOUNT DECIMAL(10, 2) NOT NULL,
-    DELIVERY_ADDRESS TEXT,
-    PAYMENT_METHOD VARCHAR(50),
-    PAYMENT_STATUS ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
-    CUST_ID INT NOT NULL,
-    STAFF_ID INT,
-    special_instructions TEXT,
-    pickup_time DATETIME,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (CUST_ID) REFERENCES CUSTOMER(CUST_ID) ON DELETE CASCADE,
-    FOREIGN KEY (STAFF_ID) REFERENCES STAFF(STAFF_ID) ON DELETE SET NULL
-);
+-- --------------------------------------------------------
 
--- Create ORDER_LISTING table
-CREATE TABLE ORDER_LISTING (
-    LISTING_ID INT AUTO_INCREMENT PRIMARY KEY,
-    ORDER_QUANTITY INT NOT NULL,
-    ORDER_ID INT NOT NULL,
-    ITEM_ID INT NOT NULL,
-    item_price DECIMAL(10, 2) NOT NULL,
-    special_requests TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (ORDER_ID) REFERENCES `ORDER`(ORDER_ID) ON DELETE CASCADE,
-    FOREIGN KEY (ITEM_ID) REFERENCES MENU_ITEM(ITEM_ID) ON DELETE CASCADE
-);
+--
+-- Table structure for table `activity_logs`
+--
 
--- Create activity logs table for tracking
-CREATE TABLE activity_logs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_type ENUM('customer', 'staff', 'admin') NOT NULL,
-    user_id INT NOT NULL,
-    action VARCHAR(100) NOT NULL,
-    details TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+CREATE TABLE `activity_logs` (
+  `id` int(11) NOT NULL,
+  `user_type` enum('customer','staff','admin') NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `action` varchar(100) NOT NULL,
+  `details` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Insert default admin users with hashed passwords
-INSERT INTO ADMIN (ADM_USERNAME, ADM_PASSWORD, ADM_EMAIL) VALUES 
-('admin_sara', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin.sara@email.com'),
-('sofeaJane_admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin.sofeaJanee@gmail.com'),
-('irfanIzzany_admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin.irfanIzzaneyy16@gmail.com'),
-('admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin@cafedelights.com');
+--
+-- Dumping data for table `activity_logs`
+--
 
--- Insert default staff users
-INSERT INTO STAFF (STAFF_NAME, STAFF_PNUMBER, STAFF_EMAIL, STAFF_PASSWORD) VALUES 
-('Staff User', '0987654321', 'staff@cafedelights.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'),
-('John Staff', '0123456789', 'john.staff@cafedelights.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi');
+INSERT INTO `activity_logs` (`id`, `user_type`, `user_id`, `action`, `details`, `created_at`) VALUES
+(1, 'customer', 3, 'user_registered', 'Customer registered successfully', '2025-06-25 07:57:44'),
+(2, 'customer', 3, 'order_placed', 'Order #4 placed', '2025-06-25 08:24:55'),
+(3, 'customer', 4, 'user_registered', 'Customer registered successfully', '2025-06-25 16:00:16'),
+(4, 'customer', 4, 'user_login', 'User logged in successfully', '2025-06-25 16:00:35'),
+(5, 'customer', 4, 'user_login', 'User logged in successfully', '2025-06-25 16:00:54'),
+(6, 'customer', 4, 'order_placed', 'Order #5 placed', '2025-06-25 16:17:02'),
+(7, 'customer', 4, 'payment_completed', 'Payment completed for order #5', '2025-06-25 16:27:07'),
+(8, 'customer', 4, 'order_placed', 'Order #6 placed', '2025-06-25 18:26:27'),
+(9, 'customer', 4, 'payment_completed', 'Payment completed for order #6', '2025-06-25 18:26:32'),
+(10, 'customer', 4, 'user_login', 'User logged in successfully', '2025-06-25 19:00:50'),
+(11, 'customer', 4, 'order_placed', 'Order #7 placed', '2025-06-25 19:01:00'),
+(12, 'customer', 4, 'payment_completed', 'Payment completed for order #7', '2025-06-25 19:01:04');
 
--- Insert sample customers
-INSERT INTO CUSTOMER (CUST_NAME, CUST_NPHONE, CUST_EMAIL, CUST_PASSWORD, MEMBERSHIP) VALUES 
-('John Customer', '0111234567', 'john.customer@email.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'basic'),
-('Jane Premium', '0119876543', 'jane.premium@email.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'premium');
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `admin`
+--
+
+CREATE TABLE `admin` (
+  `ADM_ID` int(11) NOT NULL,
+  `ADM_USERNAME` varchar(50) NOT NULL,
+  `ADM_PASSWORD` varchar(255) NOT NULL,
+  `ADM_EMAIL` varchar(100) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `admin`
+--
+
+INSERT INTO `admin` (`ADM_ID`, `ADM_USERNAME`, `ADM_PASSWORD`, `ADM_EMAIL`, `created_at`, `updated_at`) VALUES
+(1, 'admin_sara', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin.sara@email.com', '2025-06-25 07:53:34', '2025-06-25 07:53:34'),
+(2, 'sofeaJane_admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin.sofeaJanee@gmail.com', '2025-06-25 07:53:34', '2025-06-25 07:53:34'),
+(3, 'irfanIzzany_admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin.irfanIzzaneyy16@gmail.com', '2025-06-25 07:53:34', '2025-06-25 07:53:34'),
+(4, 'admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin@cafedelights.com', '2025-06-25 07:53:34', '2025-06-25 07:53:34');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `customer`
+--
+
+CREATE TABLE `customer` (
+  `CUST_ID` int(11) NOT NULL,
+  `CUST_NAME` varchar(100) NOT NULL,
+  `CUST_NPHONE` varchar(20) NOT NULL,
+  `CUST_EMAIL` varchar(100) NOT NULL,
+  `CUST_PASSWORD` varchar(255) NOT NULL,
+  `MEMBERSHIP` enum('basic','premium','vip') DEFAULT 'basic',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `customer`
+--
+
+INSERT INTO `customer` (`CUST_ID`, `CUST_NAME`, `CUST_NPHONE`, `CUST_EMAIL`, `CUST_PASSWORD`, `MEMBERSHIP`, `created_at`, `updated_at`) VALUES
+(1, 'John Customer', '0111234567', 'john.customer@email.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'basic', '2025-06-25 07:53:34', '2025-06-25 07:53:34'),
+(2, 'Jane Premium', '0119876543', 'jane.premium@email.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'premium', '2025-06-25 07:53:34', '2025-06-25 07:53:34'),
+(3, 'asd', '01110314882', 'ajim@gmail.com', '$2y$10$iA0Hrj7pFvrP0ivlLv0dSOBOsz/ME.PlSbwLcbQ8PQ33u1pTx0Aji', 'vip', '2025-06-25 07:57:44', '2025-06-25 07:57:44'),
+(4, 'xan', '01110314882', 'muhdnabil6699@gmail.com', '$2y$10$l5GjsgfP7VlZmvbzoGs9LOpicWYXPlK3pcSmq6UQHTfcPk3Icz/8q', 'basic', '2025-06-25 16:00:16', '2025-06-25 16:00:16');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `menu_item`
+--
+
+CREATE TABLE `menu_item` (
+  `ITEM_ID` int(11) NOT NULL,
+  `ITEM_NAME` varchar(100) NOT NULL,
+  `ITEM_PRICE` decimal(10,2) NOT NULL,
+  `ITEM_DESCRIPTION` text DEFAULT NULL,
+  `ITEM_CATEGORY` varchar(50) NOT NULL,
+  `STOCK_LEVEL` int(11) DEFAULT 0,
+  `ADMIN_ID` int(11) DEFAULT NULL,
+  `image` varchar(255) DEFAULT NULL,
+  `active` tinyint(1) DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `menu_item`
+--
 
 INSERT INTO `menu_item` (`ITEM_ID`, `ITEM_NAME`, `ITEM_PRICE`, `ITEM_DESCRIPTION`, `ITEM_CATEGORY`, `STOCK_LEVEL`, `ADMIN_ID`, `image`, `active`, `created_at`, `updated_at`) VALUES
-(657, 'Curry Mee Set', 23.10, 'A flavorful Malaysian noodle dish featuring yellow noodles in a rich and spicy coconut curry broth', 'Local Courses', 25, 1, 'https://woonheng.com/wp-content/uploads/2020/10/Curry-Laksa-Step11-1024x576.jpg', 1, '2025-06-25 17:30:00', '2025-06-25 17:30:00'),
+(657, 'Curry Mee Set', 23.10, 'A flavorful Malaysian noodle dish featuring yellow noodles in a rich and spicy coconut curry broth', 'Local Courses', 23, 1, 'https://woonheng.com/wp-content/uploads/2020/10/Curry-Laksa-Step11-1024x576.jpg', 1, '2025-06-25 17:30:00', '2025-06-25 19:01:00'),
 (658, 'Spaghetti Spicy Buttermilk Set', 23.10, 'Spaghetti tossed in a creamy, spicy buttermilk sauce infused with chili, curry leaves, and aromatic spices', 'Italian Cuisines', 40, 1, 'https://i.pinimg.com/736x/0f/1b/df/0f1bdf26296527c19f45ec854dcf423e.jpg', 1, '2025-06-25 17:30:00', '2025-06-25 17:30:00'),
 (659, 'Caesar Salad', 19.60, 'Crisp romaine lettuce tossed with Caesar dressing, croutons, and grated parmesan cheese. Often topped with grilled chicken', 'Salads', 28, 1, 'https://i.pinimg.com/736x/00/38/9d/00389ddab812fdc051465e0d21b83ee8.jpg', 1, '2025-06-25 17:30:00', '2025-06-25 17:30:00'),
 (660, 'Mushroom Soup', 14.00, 'A creamy, savory soup made from blended mushrooms, garlic, and herbs. Smooth in texture and rich in flavor', 'Side Dishes', 15, 1, 'https://i.pinimg.com/736x/fc/3d/d8/fc3dd8e101ee74115f0377a58e88ff6b.jpg', 1, '2025-06-25 17:30:00', '2025-06-25 17:30:00'),
@@ -230,70 +251,289 @@ INSERT INTO `menu_item` (`ITEM_ID`, `ITEM_NAME`, `ITEM_PRICE`, `ITEM_DESCRIPTION
 (801, 'Mango Smoothie', 12.60, 'Fresh mango smoothie with yogurt', 'Beverages', 25, 3, 'https://www.cubesnjuliennes.com/wp-content/uploads/2021/04/Mango-Smoothie-Recipe.jpg', 1, '2025-06-25 17:30:00', '2025-06-25 18:14:19'),
 (814, 'Loaded Potato Skins', 14.70, 'Crispy potato skins with cheese and bacon', 'Appetizers', 25, 2, 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRz6UTP7HkNBr6p4Ur5BrwUxkF6QONRDYhfJg&s', 1, '2025-06-25 17:30:00', '2025-06-25 18:19:42');
 
--- Update stock levels for better inventory management
-UPDATE MENU_ITEM SET STOCK_LEVEL = STOCK_LEVEL + 5 WHERE STOCK_LEVEL < 10;
+-- --------------------------------------------------------
 
--- Insert sample order listings
-INSERT INTO ORDER_LISTING (ORDER_QUANTITY, ORDER_ID, ITEM_ID, item_price) VALUES
-(1, 1, 657, 23.10),  
-(1, 1, 658, 23.10),  
-(1, 1, 659, 19.60),  
-(1, 2, 660, 14.00),  
-(1, 3, 661, 19.60),  
-(1, 3, 662, 18.90);  
+--
+-- Table structure for table `order`
+--
 
--- Create indexes for better performance
-CREATE INDEX idx_order_cust_id ON `ORDER`(CUST_ID);
-CREATE INDEX idx_order_staff_id ON `ORDER`(STAFF_ID);
-CREATE INDEX idx_order_status ON `ORDER`(ORDER_STATUS);
-CREATE INDEX idx_order_date ON `ORDER`(ORDER_DATE);
-CREATE INDEX idx_order_listing_order_id ON ORDER_LISTING(ORDER_ID);
-CREATE INDEX idx_order_listing_item_id ON ORDER_LISTING(ITEM_ID);
-CREATE INDEX idx_menu_item_category ON MENU_ITEM(ITEM_CATEGORY);
-CREATE INDEX idx_menu_item_active ON MENU_ITEM(active);
-CREATE INDEX idx_customer_email ON CUSTOMER(CUST_EMAIL);
-CREATE INDEX idx_staff_email ON STAFF(STAFF_EMAIL);
-CREATE INDEX idx_admin_username ON ADMIN(ADM_USERNAME);
+CREATE TABLE `order` (
+  `ORDER_ID` int(11) NOT NULL,
+  `ORDER_TIME` time NOT NULL,
+  `ORDER_DATE` date NOT NULL,
+  `ORDER_TYPE` enum('delivery','takeaway','dine-in') NOT NULL,
+  `ORDER_STATUS` enum('pending','preparing','ready','out_for_delivery','completed','cancelled') DEFAULT 'pending',
+  `TOT_AMOUNT` decimal(10,2) NOT NULL,
+  `DELIVERY_ADDRESS` text DEFAULT NULL,
+  `PAYMENT_METHOD` varchar(50) DEFAULT NULL,
+  `PAYMENT_STATUS` enum('pending','completed','failed') DEFAULT 'pending',
+  `CUST_ID` int(11) NOT NULL,
+  `STAFF_ID` int(11) DEFAULT NULL,
+  `special_instructions` text DEFAULT NULL,
+  `pickup_time` datetime DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
--- Create views for easier data access
-CREATE VIEW order_summary AS
-SELECT 
-    o.ORDER_ID,
-    o.ORDER_TIME,
-    o.ORDER_DATE,
-    o.ORDER_TYPE,
-    o.ORDER_STATUS,
-    o.TOT_AMOUNT,
-    o.DELIVERY_ADDRESS,
-    o.PAYMENT_METHOD,
-    o.PAYMENT_STATUS,
-    c.CUST_NAME as customer_name,
-    c.CUST_EMAIL as customer_email,
-    c.CUST_NPHONE as customer_phone,
-    s.STAFF_NAME as staff_name,
-    COUNT(ol.LISTING_ID) as item_count
-FROM `ORDER` o
-JOIN CUSTOMER c ON o.CUST_ID = c.CUST_ID
-LEFT JOIN STAFF s ON o.STAFF_ID = s.STAFF_ID
-LEFT JOIN ORDER_LISTING ol ON o.ORDER_ID = ol.ORDER_ID
-GROUP BY o.ORDER_ID;
+--
+-- Dumping data for table `order`
+--
 
--- Create view for popular items
-CREATE VIEW popular_items AS
-SELECT 
-    mi.ITEM_ID,
-    mi.ITEM_NAME,
-    mi.ITEM_DESCRIPTION,
-    mi.ITEM_PRICE,
-    mi.ITEM_CATEGORY,
-    mi.image,
-    mi.STOCK_LEVEL,
-    COUNT(ol.LISTING_ID) as order_count,
-    SUM(ol.ORDER_QUANTITY) as total_quantity
-FROM MENU_ITEM mi
-LEFT JOIN ORDER_LISTING ol ON mi.ITEM_ID = ol.ITEM_ID
-WHERE mi.active = TRUE
-GROUP BY mi.ITEM_ID
-ORDER BY order_count DESC, total_quantity DESC;
+INSERT INTO `order` (`ORDER_ID`, `ORDER_TIME`, `ORDER_DATE`, `ORDER_TYPE`, `ORDER_STATUS`, `TOT_AMOUNT`, `DELIVERY_ADDRESS`, `PAYMENT_METHOD`, `PAYMENT_STATUS`, `CUST_ID`, `STAFF_ID`, `special_instructions`, `pickup_time`, `created_at`, `updated_at`) VALUES
+(1, '12:30:00', '2024-01-15', 'delivery', 'completed', 25.80, '123 Main Street, City', 'fpx', 'completed', 1, 1, 'Please ring the doorbell', NULL, '2025-06-25 07:53:34', '2025-06-25 07:53:34'),
+(2, '14:15:00', '2024-01-15', 'takeaway', 'ready', 18.90, NULL, 'credit_card', 'completed', 1, 1, 'Extra sauce please', NULL, '2025-06-25 07:53:34', '2025-06-25 07:53:34'),
+(3, '19:45:00', '2024-01-15', 'dine-in', 'preparing', 32.70, NULL, 'ewallet', 'completed', 2, 2, 'Table for 2', NULL, '2025-06-25 07:53:34', '2025-06-25 07:53:34'),
+(4, '10:24:55', '2025-06-25', 'delivery', 'pending', 15.32, 'ads', NULL, 'pending', 3, NULL, 'asd', NULL, '2025-06-25 08:24:55', '2025-06-25 08:24:55'),
+(5, '18:17:02', '2025-06-25', 'delivery', 'pending', 17.90, 'ad', 'fpx', 'completed', 4, NULL, 'da', NULL, '2025-06-25 16:17:02', '2025-06-25 16:27:07'),
+(6, '20:26:27', '2025-06-25', 'dine-in', 'pending', 23.10, '', 'fpx', 'completed', 4, NULL, 's', '2025-07-04 02:28:00', '2025-06-25 18:26:27', '2025-06-25 18:26:32'),
+(7, '21:01:00', '2025-06-25', 'delivery', 'pending', 28.10, 'asd', 'fpx', 'completed', 4, NULL, '', NULL, '2025-06-25 19:01:00', '2025-06-25 19:01:04');
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `order_listing`
+--
+
+CREATE TABLE `order_listing` (
+  `LISTING_ID` int(11) NOT NULL,
+  `ORDER_QUANTITY` int(11) NOT NULL,
+  `ORDER_ID` int(11) NOT NULL,
+  `ITEM_ID` int(11) NOT NULL,
+  `item_price` decimal(10,2) NOT NULL,
+  `special_requests` text DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `order_listing`
+--
+
+INSERT INTO `order_listing` (`LISTING_ID`, `ORDER_QUANTITY`, `ORDER_ID`, `ITEM_ID`, `item_price`, `special_requests`, `created_at`) VALUES
+(9, 1, 6, 657, 23.10, NULL, '2025-06-25 18:26:27'),
+(16, 1, 7, 657, 23.10, NULL, '2025-06-25 19:01:00'),
+(17, 1, 1, 657, 23.10, NULL, '2025-06-25 19:04:03'),
+(18, 1, 1, 658, 23.10, NULL, '2025-06-25 19:04:03'),
+(19, 1, 1, 659, 19.60, NULL, '2025-06-25 19:04:03'),
+(20, 1, 2, 660, 14.00, NULL, '2025-06-25 19:04:03'),
+(21, 1, 3, 661, 19.60, NULL, '2025-06-25 19:04:03'),
+(22, 1, 3, 662, 18.90, NULL, '2025-06-25 19:04:03');
+
+-- --------------------------------------------------------
+
+--
+-- Stand-in structure for view `order_summary`
+-- (See below for the actual view)
+--
+CREATE TABLE `order_summary` (
+`ORDER_ID` int(11)
+,`ORDER_TIME` time
+,`ORDER_DATE` date
+,`ORDER_TYPE` enum('delivery','takeaway','dine-in')
+,`ORDER_STATUS` enum('pending','preparing','ready','out_for_delivery','completed','cancelled')
+,`TOT_AMOUNT` decimal(10,2)
+,`DELIVERY_ADDRESS` text
+,`PAYMENT_METHOD` varchar(50)
+,`PAYMENT_STATUS` enum('pending','completed','failed')
+,`customer_name` varchar(100)
+,`customer_email` varchar(100)
+,`customer_phone` varchar(20)
+,`staff_name` varchar(100)
+,`item_count` bigint(21)
+);
+
+-- --------------------------------------------------------
+
+--
+-- Stand-in structure for view `popular_items`
+-- (See below for the actual view)
+--
+CREATE TABLE `popular_items` (
+`ITEM_ID` int(11)
+,`ITEM_NAME` varchar(100)
+,`ITEM_DESCRIPTION` text
+,`ITEM_PRICE` decimal(10,2)
+,`ITEM_CATEGORY` varchar(50)
+,`image` varchar(255)
+,`STOCK_LEVEL` int(11)
+,`order_count` bigint(21)
+,`total_quantity` decimal(32,0)
+);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `staff`
+--
+
+CREATE TABLE `staff` (
+  `STAFF_ID` int(11) NOT NULL,
+  `STAFF_NAME` varchar(100) NOT NULL,
+  `STAFF_PNUMBER` varchar(20) NOT NULL,
+  `STAFF_EMAIL` varchar(100) NOT NULL,
+  `STAFF_PASSWORD` varchar(255) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `staff`
+--
+
+INSERT INTO `staff` (`STAFF_ID`, `STAFF_NAME`, `STAFF_PNUMBER`, `STAFF_EMAIL`, `STAFF_PASSWORD`, `created_at`, `updated_at`) VALUES
+(1, 'Staff User', '0987654321', 'staff@cafedelights.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '2025-06-25 07:53:34', '2025-06-25 07:53:34'),
+(2, 'John Staff', '0123456789', 'john.staff@cafedelights.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', '2025-06-25 07:53:34', '2025-06-25 07:53:34');
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `order_summary`
+--
+DROP TABLE IF EXISTS `order_summary`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `order_summary`  AS SELECT `o`.`ORDER_ID` AS `ORDER_ID`, `o`.`ORDER_TIME` AS `ORDER_TIME`, `o`.`ORDER_DATE` AS `ORDER_DATE`, `o`.`ORDER_TYPE` AS `ORDER_TYPE`, `o`.`ORDER_STATUS` AS `ORDER_STATUS`, `o`.`TOT_AMOUNT` AS `TOT_AMOUNT`, `o`.`DELIVERY_ADDRESS` AS `DELIVERY_ADDRESS`, `o`.`PAYMENT_METHOD` AS `PAYMENT_METHOD`, `o`.`PAYMENT_STATUS` AS `PAYMENT_STATUS`, `c`.`CUST_NAME` AS `customer_name`, `c`.`CUST_EMAIL` AS `customer_email`, `c`.`CUST_NPHONE` AS `customer_phone`, `s`.`STAFF_NAME` AS `staff_name`, count(`ol`.`LISTING_ID`) AS `item_count` FROM (((`order` `o` join `customer` `c` on(`o`.`CUST_ID` = `c`.`CUST_ID`)) left join `staff` `s` on(`o`.`STAFF_ID` = `s`.`STAFF_ID`)) left join `order_listing` `ol` on(`o`.`ORDER_ID` = `ol`.`ORDER_ID`)) GROUP BY `o`.`ORDER_ID` ;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `popular_items`
+--
+DROP TABLE IF EXISTS `popular_items`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `popular_items`  AS SELECT `mi`.`ITEM_ID` AS `ITEM_ID`, `mi`.`ITEM_NAME` AS `ITEM_NAME`, `mi`.`ITEM_DESCRIPTION` AS `ITEM_DESCRIPTION`, `mi`.`ITEM_PRICE` AS `ITEM_PRICE`, `mi`.`ITEM_CATEGORY` AS `ITEM_CATEGORY`, `mi`.`image` AS `image`, `mi`.`STOCK_LEVEL` AS `STOCK_LEVEL`, count(`ol`.`LISTING_ID`) AS `order_count`, sum(`ol`.`ORDER_QUANTITY`) AS `total_quantity` FROM (`menu_item` `mi` left join `order_listing` `ol` on(`mi`.`ITEM_ID` = `ol`.`ITEM_ID`)) WHERE `mi`.`active` = 1 GROUP BY `mi`.`ITEM_ID` ORDER BY count(`ol`.`LISTING_ID`) DESC, sum(`ol`.`ORDER_QUANTITY`) DESC ;
+
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `activity_logs`
+--
+ALTER TABLE `activity_logs`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `admin`
+--
+ALTER TABLE `admin`
+  ADD PRIMARY KEY (`ADM_ID`),
+  ADD UNIQUE KEY `ADM_USERNAME` (`ADM_USERNAME`),
+  ADD UNIQUE KEY `ADM_EMAIL` (`ADM_EMAIL`),
+  ADD KEY `idx_admin_username` (`ADM_USERNAME`);
+
+--
+-- Indexes for table `customer`
+--
+ALTER TABLE `customer`
+  ADD PRIMARY KEY (`CUST_ID`),
+  ADD UNIQUE KEY `CUST_EMAIL` (`CUST_EMAIL`),
+  ADD KEY `idx_customer_email` (`CUST_EMAIL`);
+
+--
+-- Indexes for table `menu_item`
+--
+ALTER TABLE `menu_item`
+  ADD PRIMARY KEY (`ITEM_ID`),
+  ADD KEY `ADMIN_ID` (`ADMIN_ID`),
+  ADD KEY `idx_menu_item_category` (`ITEM_CATEGORY`),
+  ADD KEY `idx_menu_item_active` (`active`);
+
+--
+-- Indexes for table `order`
+--
+ALTER TABLE `order`
+  ADD PRIMARY KEY (`ORDER_ID`),
+  ADD KEY `idx_order_cust_id` (`CUST_ID`),
+  ADD KEY `idx_order_staff_id` (`STAFF_ID`),
+  ADD KEY `idx_order_status` (`ORDER_STATUS`),
+  ADD KEY `idx_order_date` (`ORDER_DATE`);
+
+--
+-- Indexes for table `order_listing`
+--
+ALTER TABLE `order_listing`
+  ADD PRIMARY KEY (`LISTING_ID`),
+  ADD KEY `idx_order_listing_order_id` (`ORDER_ID`),
+  ADD KEY `idx_order_listing_item_id` (`ITEM_ID`);
+
+--
+-- Indexes for table `staff`
+--
+ALTER TABLE `staff`
+  ADD PRIMARY KEY (`STAFF_ID`),
+  ADD UNIQUE KEY `STAFF_EMAIL` (`STAFF_EMAIL`),
+  ADD KEY `idx_staff_email` (`STAFF_EMAIL`);
+
+--
+-- AUTO_INCREMENT for dumped tables
+--
+
+--
+-- AUTO_INCREMENT for table `activity_logs`
+--
+ALTER TABLE `activity_logs`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+
+--
+-- AUTO_INCREMENT for table `admin`
+--
+ALTER TABLE `admin`
+  MODIFY `ADM_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `customer`
+--
+ALTER TABLE `customer`
+  MODIFY `CUST_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `menu_item`
+--
+ALTER TABLE `menu_item`
+  MODIFY `ITEM_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=817;
+
+--
+-- AUTO_INCREMENT for table `order`
+--
+ALTER TABLE `order`
+  MODIFY `ORDER_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+--
+-- AUTO_INCREMENT for table `order_listing`
+--
+ALTER TABLE `order_listing`
+  MODIFY `LISTING_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+
+--
+-- AUTO_INCREMENT for table `staff`
+--
+ALTER TABLE `staff`
+  MODIFY `STAFF_ID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `menu_item`
+--
+ALTER TABLE `menu_item`
+  ADD CONSTRAINT `menu_item_ibfk_1` FOREIGN KEY (`ADMIN_ID`) REFERENCES `admin` (`ADM_ID`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `order`
+--
+ALTER TABLE `order`
+  ADD CONSTRAINT `order_ibfk_1` FOREIGN KEY (`CUST_ID`) REFERENCES `customer` (`CUST_ID`) ON DELETE CASCADE,
+  ADD CONSTRAINT `order_ibfk_2` FOREIGN KEY (`STAFF_ID`) REFERENCES `staff` (`STAFF_ID`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `order_listing`
+--
+ALTER TABLE `order_listing`
+  ADD CONSTRAINT `order_listing_ibfk_1` FOREIGN KEY (`ORDER_ID`) REFERENCES `order` (`ORDER_ID`) ON DELETE CASCADE,
+  ADD CONSTRAINT `order_listing_ibfk_2` FOREIGN KEY (`ITEM_ID`) REFERENCES `menu_item` (`ITEM_ID`) ON DELETE CASCADE;
 COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
