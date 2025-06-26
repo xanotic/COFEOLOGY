@@ -37,8 +37,8 @@ $payment_error = '';
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $payment_method = $_POST['payment_method'] ?? '';
     
-    if (empty($payment_method)) {
-        $payment_error = "Please select a payment method";
+    if (empty($payment_method) || $payment_method !== 'fpx') {
+        $payment_error = "Please select FPX Online Banking as payment method";
     } else {
         // Simulate payment processing
         // In a real application, you would integrate with a payment gateway here
@@ -106,12 +106,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <div class="form-group">
                                     <label class="form-label">Payment Method</label>
                                     <div class="payment-methods">
-                                        <label class="payment-method">
-                                            <div class="payment-method-icon">
-                                                <i class="fas fa-university"></i>
-                                            <span>FPX Online Banking</span>
-                                            <input type="radio" name="payment_method" value="fpx" required>
-                                        </label>
+                                        <input type="radio" name="payment_method" value="fpx" required checked>
+                                        <div class="payment-method-icon">
+                                            <i class="fas fa-university"></i>
+                                        </div>
+                                        <span>FPX Online Banking</span>
                                     </div>
                                 </div>
                                 
@@ -125,42 +124,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                             <option value="public">Public Bank</option>
                                             <option value="rhb">RHB Bank</option>
                                             <option value="hong_leong">Hong Leong Bank</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                
-                                <div id="card-section" class="payment-section-details" style="display: none;">
-                                    <div class="form-group">
-                                        <label for="card_number" class="form-label">Card Number</label>
-                                        <input type="text" id="card_number" name="card_number" class="form-control" placeholder="1234 5678 9012 3456">
-                                    </div>
-                                    
-                                    <div class="form-row">
-                                        <div class="form-group">
-                                            <label for="expiry_date" class="form-label">Expiry Date</label>
-                                            <input type="text" id="expiry_date" name="expiry_date" class="form-control" placeholder="MM/YY">
-                                        </div>
-                                        
-                                        <div class="form-group">
-                                            <label for="cvv" class="form-label">CVV</label>
-                                            <input type="text" id="cvv" name="cvv" class="form-control" placeholder="123">
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="card_name" class="form-label">Name on Card</label>
-                                        <input type="text" id="card_name" name="card_name" class="form-control">
-                                    </div>
-                                </div>
-                                
-                                <div id="ewallet-section" class="payment-section-details" style="display: none;">
-                                    <div class="form-group">
-                                        <label for="ewallet_provider" class="form-label">E-Wallet Provider</label>
-                                        <select id="ewallet_provider" name="ewallet_provider" class="form-control">
-                                            <option value="">-- Select Provider --</option>
-                                            <option value="touch_n_go">Touch 'n Go eWallet</option>
-                                            <option value="grab_pay">GrabPay</option>
-                                            <option value="boost">Boost</option>
                                         </select>
                                     </div>
                                 </div>
@@ -232,28 +195,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <script src="js/main.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Payment method selection
-            const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
+            // Show FPX section by default since it's the only option
             const fpxSection = document.getElementById('fpx-section');
-            const cardSection = document.getElementById('card-section');
-            const ewalletSection = document.getElementById('ewallet-section');
-            
-            if (paymentMethods) {
-                paymentMethods.forEach(method => {
-                    method.addEventListener('change', function() {
-                        fpxSection.style.display = 'none';
-                        cardSection.style.display = 'none';
-                        ewalletSection.style.display = 'none';
-                        
-                        if (this.value === 'fpx') {
-                            fpxSection.style.display = 'block';
-                        } else if (this.value === 'credit_card') {
-                            cardSection.style.display = 'block';
-                        } else if (this.value === 'ewallet') {
-                            ewalletSection.style.display = 'block';
-                        }
-                    });
-                });
+            if (fpxSection) {
+                fpxSection.style.display = 'block';
             }
             
             <?php if ($payment_success): ?>

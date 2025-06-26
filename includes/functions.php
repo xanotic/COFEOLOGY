@@ -1,5 +1,5 @@
 <?php
-// Updated functions for the new database structure
+// Updated functions for the new database structure with custom IDs
 
 function isLoggedIn() {
     return isset($_SESSION['user_id']) && isset($_SESSION['user_type']);
@@ -30,7 +30,7 @@ function getPopularItems($conn, $limit = 4) {
         return $items;
     }
     
-    $sql = "SELECT ITEM_ID as id, ITEM_NAME as name, ITEM_DESCRIPTION as description, ITEM_PRICE as price, ITEM_CATEGORY as category, STOCK_LEVEL, image FROM MENU_ITEM WHERE active = 1 ORDER BY STOCK_LEVEL DESC LIMIT ?";
+    $sql = "SELECT ITEM_ID as id, MENU_ITEM_ID as menu_item_id, ITEM_NAME as name, ITEM_DESCRIPTION as description, ITEM_PRICE as price, ITEM_CATEGORY as category, STOCK_LEVEL, image FROM MENU_ITEM WHERE active = 1 ORDER BY STOCK_LEVEL DESC LIMIT ?";
     $stmt = $conn->prepare($sql);
     
     if($stmt) {
@@ -42,6 +42,7 @@ function getPopularItems($conn, $limit = 4) {
             // Ensure all required fields have default values
             $item = [
                 'id' => $row['id'] ?? 0,
+                'menu_item_id' => $row['menu_item_id'] ?? 'MI#0',
                 'name' => $row['name'] ?? 'Unknown Item',
                 'description' => $row['description'] ?? 'No description available',
                 'price' => $row['price'] ?? 0.00,
@@ -66,7 +67,7 @@ function getMenuItems($conn, $category = null) {
         return $items;
     }
     
-    $sql = "SELECT ITEM_ID as id, ITEM_NAME as name, ITEM_DESCRIPTION as description, ITEM_PRICE as price, ITEM_CATEGORY as category, STOCK_LEVEL, image FROM MENU_ITEM WHERE active = 1";
+    $sql = "SELECT ITEM_ID as id, MENU_ITEM_ID as menu_item_id, ITEM_NAME as name, ITEM_DESCRIPTION as description, ITEM_PRICE as price, ITEM_CATEGORY as category, STOCK_LEVEL, image FROM MENU_ITEM WHERE active = 1";
     
     if ($category) {
         $sql .= " AND ITEM_CATEGORY = ?";
@@ -84,6 +85,7 @@ function getMenuItems($conn, $category = null) {
             // Ensure all required fields have default values
             $item = [
                 'id' => $row['id'] ?? 0,
+                'menu_item_id' => $row['menu_item_id'] ?? 'MI#0',
                 'name' => $row['name'] ?? 'Unknown Item',
                 'description' => $row['description'] ?? 'No description available',
                 'price' => $row['price'] ?? 0.00,
@@ -99,13 +101,31 @@ function getMenuItems($conn, $category = null) {
     return $items;
 }
 
+// Helper function to generate next custom ID
+function getNextCustomId($conn, $table, $prefix, $id_column) {
+    $stmt = $conn->prepare("SELECT MAX(CAST(SUBSTRING($id_column, 3) AS UNSIGNED)) as max_num FROM $table WHERE $id_column LIKE ?");
+    $pattern = $prefix . '%';
+    
+    if($stmt) {
+        $stmt->bind_param("s", $pattern);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+        $next_num = ($row['max_num'] ?? 0) + 1;
+        $stmt->close();
+        return $prefix . $next_num;
+    }
+    
+    return $prefix . '1';
+}
+
 // Customer Authentication Functions
 function registerCustomer($conn, $name, $email, $password, $phone, $membership = 'basic') {
-    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+    $customer_id = getNextCustomId($conn, 'CUSTOMER', 'C#', 'CUSTOMER_ID');
     
-    $stmt = $conn->prepare("INSERT INTO CUSTOMER (CUST_NAME, CUST_EMAIL, CUST_PASSWORD, CUST_NPHONE, MEMBERSHIP) VALUES (?, ?, ?, ?, ?)");
+    $stmt = $conn->prepare("INSERT INTO CUSTOMER (CUSTOMER_ID, CUST_NAME, CUST_EMAIL, CUST_PASSWORD, CUST_NPHONE, MEMBERSHIP) VALUES (?, ?, ?, ?, ?, ?)");
     if($stmt) {
-        $stmt->bind_param("sssss", $name, $email, $hashed_password, $phone, $membership);
+        $stmt->bind_param("ssssss", $customer_id, $name, $email, $password, $phone, $membership);
         
         if ($stmt->execute()) {
             $user_id = $conn->insert_id;
@@ -121,9 +141,9 @@ function registerCustomer($conn, $name, $email, $password, $phone, $membership =
 function loginUser($conn, $email, $password, $user_type = null) {
     // Try to login as customer first, then staff, then admin
     $tables = [
-        'customer' => ['table' => 'CUSTOMER', 'id' => 'CUST_ID', 'name' => 'CUST_NAME', 'email' => 'CUST_EMAIL', 'password' => 'CUST_PASSWORD'],
-        'staff' => ['table' => 'STAFF', 'id' => 'STAFF_ID', 'name' => 'STAFF_NAME', 'email' => 'STAFF_EMAIL', 'password' => 'STAFF_PASSWORD'],
-        'admin' => ['table' => 'ADMIN', 'id' => 'ADM_ID', 'name' => 'ADM_USERNAME', 'email' => 'ADM_EMAIL', 'password' => 'ADM_PASSWORD']
+        'customer' => ['table' => 'CUSTOMER', 'id' => 'CUST_ID', 'custom_id' => 'CUSTOMER_ID', 'name' => 'CUST_NAME', 'email' => 'CUST_EMAIL', 'password' => 'CUST_PASSWORD'],
+        'staff' => ['table' => 'STAFF', 'id' => 'STAFF_ID', 'custom_id' => 'STAFF_NUMBER', 'name' => 'STAFF_NAME', 'email' => 'STAFF_EMAIL', 'password' => 'STAFF_PASSWORD'],
+        'admin' => ['table' => 'ADMIN', 'id' => 'ADM_ID', 'custom_id' => 'ADMIN_ID', 'name' => 'ADM_USERNAME', 'email' => 'ADM_EMAIL', 'password' => 'ADM_PASSWORD']
     ];
     
     // If user_type is specified, only check that table
@@ -132,7 +152,7 @@ function loginUser($conn, $email, $password, $user_type = null) {
     }
     
     foreach ($tables as $type => $config) {
-        $stmt = $conn->prepare("SELECT {$config['id']}, {$config['name']}, {$config['email']}, {$config['password']} FROM {$config['table']} WHERE {$config['email']} = ?");
+        $stmt = $conn->prepare("SELECT {$config['id']}, {$config['custom_id']}, {$config['name']}, {$config['email']}, {$config['password']} FROM {$config['table']} WHERE {$config['email']} = ?");
         if($stmt) {
             $stmt->bind_param("s", $email);
             $stmt->execute();
@@ -140,7 +160,7 @@ function loginUser($conn, $email, $password, $user_type = null) {
             
             if ($result->num_rows === 1) {
                 $user = $result->fetch_assoc();
-                if (password_verify($password, $user[$config['password']])) {
+                if ($password === $user[$config['password']]) {
                     // Password is correct, start a new session
                     if (session_status() == PHP_SESSION_NONE) {
                         session_start();
@@ -148,6 +168,7 @@ function loginUser($conn, $email, $password, $user_type = null) {
                     
                     // Store data in session variables
                     $_SESSION["user_id"] = $user[$config['id']];
+                    $_SESSION["user_custom_id"] = $user[$config['custom_id']];
                     $_SESSION["user_name"] = $user[$config['name']];
                     $_SESSION["user_email"] = $user[$config['email']];
                     $_SESSION["user_type"] = $type;
@@ -171,12 +192,13 @@ function createOrder($conn, $cust_id, $order_type, $total_amount, $delivery_addr
         return false;
     }
     
+    $order_number = getNextCustomId($conn, '`ORDER`', 'O#', 'ORDER_NUMBER');
     $order_time = date('H:i:s');
     $order_date = date('Y-m-d');
     
-    $stmt = $conn->prepare("INSERT INTO `ORDER` (ORDER_TIME, ORDER_DATE, ORDER_TYPE, TOT_AMOUNT, DELIVERY_ADDRESS, PAYMENT_METHOD, CUST_ID, special_instructions, pickup_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $conn->prepare("INSERT INTO `ORDER` (ORDER_NUMBER, ORDER_TIME, ORDER_DATE, ORDER_TYPE, TOT_AMOUNT, DELIVERY_ADDRESS, PAYMENT_METHOD, CUST_ID, special_instructions, pickup_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     if($stmt) {
-        $stmt->bind_param("sssdssiss", $order_time, $order_date, $order_type, $total_amount, $delivery_address, $payment_method, $cust_id, $special_instructions, $pickup_time);
+        $stmt->bind_param("ssssdssiis", $order_number, $order_time, $order_date, $order_type, $total_amount, $delivery_address, $payment_method, $cust_id, $special_instructions, $pickup_time);
         
         if ($stmt->execute()) {
             $order_id = $conn->insert_id;
@@ -196,9 +218,11 @@ function addOrderListing($conn, $order_id, $item_id, $quantity, $price, $special
         return false;
     }
     
-    $stmt = $conn->prepare("INSERT INTO ORDER_LISTING (ORDER_ID, ITEM_ID, ORDER_QUANTITY, item_price, special_requests) VALUES (?, ?, ?, ?, ?)");
+    $order_listing_id = getNextCustomId($conn, 'ORDER_LISTING', 'OL#', 'ORDER_LISTING_ID');
+    
+    $stmt = $conn->prepare("INSERT INTO ORDER_LISTING (ORDER_LISTING_ID, ORDER_ID, ITEM_ID, ORDER_QUANTITY, item_price, special_requests) VALUES (?, ?, ?, ?, ?, ?)");
     if($stmt) {
-        $stmt->bind_param("iiids", $order_id, $item_id, $quantity, $price, $special_requests);
+        $stmt->bind_param("siiids", $order_listing_id, $order_id, $item_id, $quantity, $price, $special_requests);
         $result = $stmt->execute();
         $stmt->close();
         return $result;
@@ -241,7 +265,7 @@ function getOrderListings($conn, $order_id) {
     }
     
     $stmt = $conn->prepare("
-        SELECT ol.*, mi.ITEM_NAME, mi.image 
+        SELECT ol.*, mi.ITEM_NAME, mi.MENU_ITEM_ID, mi.image 
         FROM ORDER_LISTING ol
         JOIN MENU_ITEM mi ON ol.ITEM_ID = mi.ITEM_ID
         WHERE ol.ORDER_ID = ?
@@ -301,7 +325,7 @@ function getAllCustomers($conn) {
         return $customers;
     }
     
-    $stmt = $conn->prepare("SELECT CUST_ID, CUST_NAME, CUST_EMAIL, CUST_NPHONE, MEMBERSHIP, created_at FROM CUSTOMER ORDER BY created_at DESC");
+    $stmt = $conn->prepare("SELECT CUST_ID, CUSTOMER_ID, CUST_NAME, CUST_EMAIL, CUST_NPHONE, MEMBERSHIP, created_at FROM CUSTOMER ORDER BY created_at DESC");
     if($stmt) {
         $stmt->execute();
         $result = $stmt->get_result();
@@ -324,7 +348,7 @@ function getAllStaff($conn) {
         return $staff;
     }
     
-    $stmt = $conn->prepare("SELECT STAFF_ID, STAFF_NAME, STAFF_EMAIL, STAFF_PNUMBER, created_at FROM STAFF ORDER BY created_at DESC");
+    $stmt = $conn->prepare("SELECT STAFF_ID, STAFF_NUMBER, STAFF_NAME, STAFF_EMAIL, STAFF_PNUMBER, created_at FROM STAFF ORDER BY created_at DESC");
     if($stmt) {
         $stmt->execute();
         $result = $stmt->get_result();
@@ -357,9 +381,11 @@ function addMenuItem($conn, $name, $description, $price, $category, $stock_level
         return false;
     }
     
-    $stmt = $conn->prepare("INSERT INTO MENU_ITEM (ITEM_NAME, ITEM_DESCRIPTION, ITEM_PRICE, ITEM_CATEGORY, STOCK_LEVEL, ADMIN_ID, image) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $menu_item_id = getNextCustomId($conn, 'MENU_ITEM', 'MI#', 'MENU_ITEM_ID');
+    
+    $stmt = $conn->prepare("INSERT INTO MENU_ITEM (MENU_ITEM_ID, ITEM_NAME, ITEM_DESCRIPTION, ITEM_PRICE, ITEM_CATEGORY, STOCK_LEVEL, ADMIN_ID, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
     if($stmt) {
-        $stmt->bind_param("ssdsiis", $name, $description, $price, $category, $stock_level, $admin_id, $image);
+        $stmt->bind_param("sssdsiss", $menu_item_id, $name, $description, $price, $category, $stock_level, $admin_id, $image);
         $result = $stmt->execute();
         $stmt->close();
         return $result;
