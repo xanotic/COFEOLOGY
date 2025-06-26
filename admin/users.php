@@ -12,32 +12,83 @@ if (!isAdmin()) {
 $message = '';
 $error = '';
 
-// Handle role updates
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
-    if ($_POST['action'] === 'update_role') {
-        $user_id = intval($_POST['user_id']);
-        $new_role = $_POST['role'];
-        
-        if (updateUserRole($conn, $user_id, $new_role)) {
-            $message = "User role updated successfully!";
-        } else {
-            $error = "Failed to update user role.";
+// Handle form submissions
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (isset($_POST['action'])) {
+        switch ($_POST['action']) {
+            case 'update_membership':
+                $cust_id = intval($_POST['cust_id']);
+                $membership = $_POST['membership'];
+                
+                $stmt = $conn->prepare("UPDATE customer SET MEMBERSHIP = ? WHERE CUST_ID = ?");
+                if ($stmt) {
+                    $stmt->bind_param("si", $membership, $cust_id);
+                    if ($stmt->execute()) {
+                        $message = "Customer membership updated successfully!";
+                    } else {
+                        $error = "Failed to update customer membership.";
+                    }
+                    $stmt->close();
+                }
+                break;
+                
+            case 'add_staff':
+                $name = $_POST['name'];
+                $email = $_POST['email'];
+                $password = $_POST['password'];
+                $phone = $_POST['phone'];
+                
+                // Generate staff number
+                $staff_number = getNextCustomId($conn, 'staff', 'S#', 'STAFF_NUMBER');
+                
+                $stmt = $conn->prepare("INSERT INTO staff (STAFF_NUMBER, STAFF_NAME, STAFF_EMAIL, STAFF_PASSWORD, STAFF_PNUMBER) VALUES (?, ?, ?, ?, ?)");
+                if ($stmt) {
+                    $stmt->bind_param("sssss", $staff_number, $name, $email, $password, $phone);
+                    if ($stmt->execute()) {
+                        $message = "Staff member added successfully!";
+                    } else {
+                        $error = "Failed to add staff member.";
+                    }
+                    $stmt->close();
+                }
+                break;
         }
     }
 }
 
-// Get all users
-$users = getAllUsers($conn);
+// Get all customers
+$customers = [];
+$result = $conn->query("SELECT * FROM customer ORDER BY created_at DESC");
+if ($result) {
+    $customers = $result->fetch_all(MYSQLI_ASSOC);
+}
+
+// Get all staff
+$staff = [];
+$result = $conn->query("SELECT * FROM staff ORDER BY created_at DESC");
+if ($result) {
+    $staff = $result->fetch_all(MYSQLI_ASSOC);
+}
 
 // Get user statistics
-$stmt = $conn->prepare("SELECT role, COUNT(*) as count FROM users GROUP BY role");
-$stmt->execute();
-$roleStats = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
 $stats = [];
-foreach ($roleStats as $stat) {
-    $stats[$stat['role']] = $stat['count'];
-}
+
+// Total customers
+$result = $conn->query("SELECT COUNT(*) as total FROM customer");
+$stats['total_customers'] = $result ? $result->fetch_assoc()['total'] : 0;
+
+// Total staff
+$result = $conn->query("SELECT COUNT(*) as total FROM staff");
+$stats['total_staff'] = $result ? $result->fetch_assoc()['total'] : 0;
+
+// Premium members
+$result = $conn->query("SELECT COUNT(*) as total FROM customer WHERE MEMBERSHIP = 'premium'");
+$stats['premium_members'] = $result ? $result->fetch_assoc()['total'] : 0;
+
+// New users this month
+$thisMonth = date('Y-m');
+$result = $conn->query("SELECT COUNT(*) as total FROM customer WHERE DATE_FORMAT(created_at, '%Y-%m') = '$thisMonth'");
+$stats['new_users'] = $result ? $result->fetch_assoc()['total'] : 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -59,7 +110,10 @@ foreach ($roleStats as $stat) {
                     <h1>Users Management</h1>
                 </div>
                 <div class="header-actions">
-                    <button class="btn btn-primary" onclick="exportUsers()">
+                    <button class="btn btn-primary" onclick="openAddStaffModal()">
+                        <i class="fas fa-user-plus"></i> Add Staff
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportUsers()">
                         <i class="fas fa-download"></i> Export
                     </button>
                 </div>
@@ -80,7 +134,7 @@ foreach ($roleStats as $stat) {
                     </div>
                     <div class="stat-info">
                         <h3>Total Customers</h3>
-                        <p><?php echo $stats['customer'] ?? 0; ?></p>
+                        <p><?php echo number_format($stats['total_customers']); ?></p>
                     </div>
                 </div>
                 <div class="stat-card">
@@ -89,16 +143,16 @@ foreach ($roleStats as $stat) {
                     </div>
                     <div class="stat-info">
                         <h3>Staff Members</h3>
-                        <p><?php echo $stats['staff'] ?? 0; ?></p>
+                        <p><?php echo number_format($stats['total_staff']); ?></p>
                     </div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon">
-                        <i class="fas fa-user-shield"></i>
+                        <i class="fas fa-crown"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>Administrators</h3>
-                        <p><?php echo $stats['admin'] ?? 0; ?></p>
+                        <h3>Premium Members</h3>
+                        <p><?php echo number_format($stats['premium_members']); ?></p>
                     </div>
                 </div>
                 <div class="stat-card">
@@ -107,102 +161,181 @@ foreach ($roleStats as $stat) {
                     </div>
                     <div class="stat-info">
                         <h3>New This Month</h3>
-                        <p>
-                            <?php
-                            $thisMonth = date('Y-m');
-                            $newUsers = array_filter($users, function($user) use ($thisMonth) {
-                                return strpos($user['created_at'], $thisMonth) === 0;
-                            });
-                            echo count($newUsers);
-                            ?>
-                        </p>
+                        <p><?php echo number_format($stats['new_users']); ?></p>
                     </div>
                 </div>
             </div>
             
-            <div class="card">
-                <div class="card-header">
-                    <h2>All Users</h2>
-                    <div class="card-filters">
-                        <select id="role-filter" class="form-control">
-                            <option value="">All Roles</option>
-                            <option value="customer">Customer</option>
-                            <option value="staff">Staff</option>
-                            <option value="admin">Admin</option>
-                        </select>
-                        <input type="text" id="search-filter" class="form-control" placeholder="Search users...">
+            <div class="dashboard-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Customers</h2>
+                        <div class="card-filters">
+                            <select id="membership-filter" class="form-control">
+                                <option value="">All Memberships</option>
+                                <option value="basic">Basic</option>
+                                <option value="premium">Premium</option>
+                                <option value="vip">VIP</option>
+                            </select>
+                            <input type="text" id="customer-search" class="form-control" placeholder="Search customers...">
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Membership</th>
+                                        <th>Joined</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="customers-table">
+                                    <?php foreach ($customers as $customer): ?>
+                                        <tr data-membership="<?php echo $customer['MEMBERSHIP']; ?>" 
+                                            data-search="<?php echo strtolower($customer['CUST_NAME'] . ' ' . $customer['CUST_EMAIL']); ?>">
+                                            <td><?php echo $customer['CUSTOMER_ID']; ?></td>
+                                            <td><?php echo htmlspecialchars($customer['CUST_NAME']); ?></td>
+                                            <td><?php echo htmlspecialchars($customer['CUST_EMAIL']); ?></td>
+                                            <td><?php echo htmlspecialchars($customer['CUST_NPHONE']); ?></td>
+                                            <td>
+                                                <span class="membership-badge <?php echo $customer['MEMBERSHIP']; ?>">
+                                                    <?php echo ucfirst($customer['MEMBERSHIP']); ?>
+                                                </span>
+                                            </td>
+                                            <td><?php echo date('M d, Y', strtotime($customer['created_at'])); ?></td>
+                                            <td>
+                                                <div class="table-actions">
+                                                    <button class="btn-icon" onclick="updateMembership(<?php echo $customer['CUST_ID']; ?>, '<?php echo $customer['MEMBERSHIP']; ?>')" title="Update Membership">
+                                                        <i class="fas fa-crown"></i>
+                                                    </button>
+                                                    <button class="btn-icon" onclick="viewCustomerDetails(<?php echo $customer['CUST_ID']; ?>)" title="View Details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Phone</th>
-                                    <th>Role</th>
-                                    <th>Joined</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="users-table">
-                                <?php foreach ($users as $user): ?>
-                                    <tr data-role="<?php echo $user['role']; ?>" data-search="<?php echo strtolower($user['name'] . ' ' . $user['email']); ?>">
-                                        <td><?php echo $user['id']; ?></td>
-                                        <td><?php echo htmlspecialchars($user['name']); ?></td>
-                                        <td><?php echo htmlspecialchars($user['email']); ?></td>
-                                        <td><?php echo htmlspecialchars($user['phone']); ?></td>
-                                        <td>
-                                            <span class="role-badge <?php echo $user['role']; ?>">
-                                                <?php echo ucfirst($user['role']); ?>
-                                            </span>
-                                        </td>
-                                        <td><?php echo date('M d, Y', strtotime($user['created_at'])); ?></td>
-                                        <td>
-                                            <div class="table-actions">
-                                                <button class="btn-icon" onclick="changeRole(<?php echo $user['id']; ?>, '<?php echo $user['role']; ?>')" title="Change Role">
-                                                    <i class="fas fa-user-cog"></i>
-                                                </button>
-                                                <button class="btn-icon" onclick="viewUserDetails(<?php echo $user['id']; ?>)" title="View Details">
-                                                    <i class="fas fa-eye"></i>
-                                                </button>
-                                            </div>
-                                        </td>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Staff Members</h2>
+                        <div class="card-filters">
+                            <input type="text" id="staff-search" class="form-control" placeholder="Search staff...">
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Joined</th>
+                                        <th>Actions</th>
                                     </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody id="staff-table">
+                                    <?php foreach ($staff as $member): ?>
+                                        <tr data-search="<?php echo strtolower($member['STAFF_NAME'] . ' ' . $member['STAFF_EMAIL']); ?>">
+                                            <td><?php echo $member['STAFF_NUMBER']; ?></td>
+                                            <td><?php echo htmlspecialchars($member['STAFF_NAME']); ?></td>
+                                            <td><?php echo htmlspecialchars($member['STAFF_EMAIL']); ?></td>
+                                            <td><?php echo htmlspecialchars($member['STAFF_PNUMBER']); ?></td>
+                                            <td><?php echo date('M d, Y', strtotime($member['created_at'])); ?></td>
+                                            <td>
+                                                <div class="table-actions">
+                                                    <button class="btn-icon" onclick="viewStaffDetails(<?php echo $member['STAFF_ID']; ?>)" title="View Details">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <!-- Role Change Modal -->
-    <div class="modal" id="role-modal">
+    <!-- Membership Update Modal -->
+    <div class="modal" id="membership-modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Change User Role</h3>
+                <h3>Update Customer Membership</h3>
                 <button class="close-modal">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="role-form" method="post">
-                    <input type="hidden" name="action" value="update_role">
-                    <input type="hidden" id="user-id" name="user_id">
+                <form id="membership-form" method="post">
+                    <input type="hidden" name="action" value="update_membership">
+                    <input type="hidden" id="membership-cust-id" name="cust_id">
                     
                     <div class="form-group">
-                        <label for="role" class="form-label">Role</label>
-                        <select id="role" name="role" class="form-control">
-                            <option value="customer">Customer</option>
-                            <option value="staff">Staff</option>
-                            <option value="admin">Admin</option>
+                        <label for="membership" class="form-label">Membership Level</label>
+                        <select id="membership" name="membership" class="form-control">
+                            <option value="basic">Basic</option>
+                            <option value="premium">Premium</option>
+                            <option value="vip">VIP</option>
                         </select>
                     </div>
                     
                     <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">Update Role</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('membership-modal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Membership</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add Staff Modal -->
+    <div class="modal" id="staff-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Staff Member</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="staff-form" method="post">
+                    <input type="hidden" name="action" value="add_staff">
+                    
+                    <div class="form-group">
+                        <label for="staff-name" class="form-label">Full Name</label>
+                        <input type="text" id="staff-name" name="name" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="staff-email" class="form-label">Email</label>
+                        <input type="email" id="staff-email" name="email" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="staff-password" class="form-label">Password</label>
+                        <input type="password" id="staff-password" name="password" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="staff-phone" class="form-label">Phone Number</label>
+                        <input type="tel" id="staff-phone" name="phone" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('staff-modal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Add Staff</button>
                     </div>
                 </form>
             </div>
@@ -227,27 +360,105 @@ foreach ($roleStats as $stat) {
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+        
+        .membership-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .membership-badge.basic {
+            background-color: #e2e3e5;
+            color: #495057;
+        }
+        
+        .membership-badge.premium {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .membership-badge.vip {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .card-filters {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .card-filters .form-control {
+            width: auto;
+            min-width: 150px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .close-modal:hover {
+            color: #333;
+        }
     </style>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Filter functionality
-            const roleFilter = document.getElementById('role-filter');
-            const searchFilter = document.getElementById('search-filter');
-            const usersTable = document.getElementById('users-table');
+            // Filter functionality for customers
+            const membershipFilter = document.getElementById('membership-filter');
+            const customerSearch = document.getElementById('customer-search');
+            const customersTable = document.getElementById('customers-table');
             
-            function filterUsers() {
-                const roleValue = roleFilter.value;
-                const searchValue = searchFilter.value.toLowerCase();
-                const rows = usersTable.querySelectorAll('tr');
+            function filterCustomers() {
+                const membershipValue = membershipFilter.value;
+                const searchValue = customerSearch.value.toLowerCase();
+                const rows = customersTable.querySelectorAll('tr');
                 
                 rows.forEach(row => {
-                    const rowRole = row.getAttribute('data-role');
+                    const rowMembership = row.getAttribute('data-membership');
                     const rowSearch = row.getAttribute('data-search');
                     
                     let showRow = true;
                     
-                    if (roleValue && rowRole !== roleValue) {
+                    if (membershipValue && rowMembership !== membershipValue) {
                         showRow = false;
                     }
                     
@@ -259,33 +470,65 @@ foreach ($roleStats as $stat) {
                 });
             }
             
-            roleFilter.addEventListener('change', filterUsers);
-            searchFilter.addEventListener('input', filterUsers);
+            membershipFilter.addEventListener('change', filterCustomers);
+            customerSearch.addEventListener('input', filterCustomers);
+            
+            // Filter functionality for staff
+            const staffSearch = document.getElementById('staff-search');
+            const staffTable = document.getElementById('staff-table');
+            
+            staffSearch.addEventListener('input', function() {
+                const searchValue = this.value.toLowerCase();
+                const rows = staffTable.querySelectorAll('tr');
+                
+                rows.forEach(row => {
+                    const rowSearch = row.getAttribute('data-search');
+                    const showRow = !searchValue || rowSearch.includes(searchValue);
+                    row.style.display = showRow ? '' : 'none';
+                });
+            });
             
             // Modal functionality
-            const modal = document.getElementById('role-modal');
-            const closeModal = document.querySelector('.close-modal');
+            const modals = document.querySelectorAll('.modal');
+            const closeButtons = document.querySelectorAll('.close-modal');
             
-            closeModal.addEventListener('click', function() {
-                modal.style.display = 'none';
+            closeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const modal = this.closest('.modal');
+                    modal.style.display = 'none';
+                });
             });
             
             window.addEventListener('click', function(event) {
-                if (event.target === modal) {
-                    modal.style.display = 'none';
-                }
+                modals.forEach(modal => {
+                    if (event.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                });
             });
         });
         
-        function changeRole(userId, currentRole) {
-            document.getElementById('user-id').value = userId;
-            document.getElementById('role').value = currentRole;
-            document.getElementById('role-modal').style.display = 'flex';
+        function updateMembership(custId, currentMembership) {
+            document.getElementById('membership-cust-id').value = custId;
+            document.getElementById('membership').value = currentMembership;
+            document.getElementById('membership-modal').style.display = 'flex';
         }
         
-        function viewUserDetails(userId) {
-            // Redirect to user details page or show modal with user details
-            window.location.href = 'user-details.php?id=' + userId;
+        function openAddStaffModal() {
+            document.getElementById('staff-form').reset();
+            document.getElementById('staff-modal').style.display = 'flex';
+        }
+        
+        function viewCustomerDetails(custId) {
+            window.location.href = 'customer-details.php?id=' + custId;
+        }
+        
+        function viewStaffDetails(staffId) {
+            window.location.href = 'staff-details.php?id=' + staffId;
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
         }
         
         function exportUsers() {

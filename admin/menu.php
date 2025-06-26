@@ -16,47 +16,80 @@ $error = '';
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (isset($_POST['action'])) {
         switch ($_POST['action']) {
-            case 'add':
+            case 'add_item':
                 $name = $_POST['name'];
-                $description = $_POST['description'];
                 $price = floatval($_POST['price']);
+                $description = $_POST['description'];
                 $category = $_POST['category'];
-                $image = $_POST['image'] ?? '';
-                $stock_level = intval($_POST['stock_level']);
-                $admin_id = $_SESSION['user_id'];
+                $stock = intval($_POST['stock']);
+                $image = $_POST['image'];
+                $admin_id = $_SESSION['admin_id'];
                 
-                if (addMenuItem($conn, $name, $description, $price, $category, $stock_level, $admin_id, $image)) {
-                    $message = "Menu item added successfully!";
-                } else {
-                    $error = "Failed to add menu item.";
+                // Generate menu item ID
+                $menu_item_id = getNextCustomId($conn, 'menu_item', 'MI#', 'MENU_ITEM_ID');
+                
+                $stmt = $conn->prepare("INSERT INTO menu_item (MENU_ITEM_ID, ITEM_NAME, ITEM_PRICE, ITEM_DESCRIPTION, ITEM_CATEGORY, STOCK_LEVEL, ADMIN_ID, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+                if ($stmt) {
+                    $stmt->bind_param("ssdssiis", $menu_item_id, $name, $price, $description, $category, $stock, $admin_id, $image);
+                    if ($stmt->execute()) {
+                        $message = "Menu item added successfully!";
+                    } else {
+                        $error = "Failed to add menu item.";
+                    }
+                    $stmt->close();
                 }
                 break;
                 
-            case 'update':
-                $id = intval($_POST['id']);
+            case 'update_item':
+                $item_id = intval($_POST['item_id']);
                 $name = $_POST['name'];
-                $description = $_POST['description'];
                 $price = floatval($_POST['price']);
+                $description = $_POST['description'];
                 $category = $_POST['category'];
+                $stock = intval($_POST['stock']);
+                $image = $_POST['image'];
                 $active = isset($_POST['active']) ? 1 : 0;
-                $image = $_POST['image'] ?? '';
-                $stock_level = intval($_POST['stock_level']);
                 
-                if (updateMenuItem($conn, $id, $name, $description, $price, $category, $stock_level, $active, $image)) {
-                    $message = "Menu item updated successfully!";
-                } else {
-                    $error = "Failed to update menu item.";
+                $stmt = $conn->prepare("UPDATE menu_item SET ITEM_NAME = ?, ITEM_PRICE = ?, ITEM_DESCRIPTION = ?, ITEM_CATEGORY = ?, STOCK_LEVEL = ?, image = ?, active = ? WHERE ITEM_ID = ?");
+                if ($stmt) {
+                    $stmt->bind_param("sdssisii", $name, $price, $description, $category, $stock, $image, $active, $item_id);
+                    if ($stmt->execute()) {
+                        $message = "Menu item updated successfully!";
+                    } else {
+                        $error = "Failed to update menu item.";
+                    }
+                    $stmt->close();
                 }
                 break;
                 
-            case 'delete':
-                $id = intval($_POST['id']);
-                $stmt = $conn->prepare("DELETE FROM menu_item WHERE ITEM_ID = ?");
-                $stmt->bind_param("i", $id);
-                if ($stmt->execute()) {
-                    $message = "Menu item deleted successfully!";
-                } else {
-                    $error = "Failed to delete menu item.";
+            case 'delete_item':
+                $item_id = intval($_POST['item_id']);
+                
+                $stmt = $conn->prepare("UPDATE menu_item SET active = 0 WHERE ITEM_ID = ?");
+                if ($stmt) {
+                    $stmt->bind_param("i", $item_id);
+                    if ($stmt->execute()) {
+                        $message = "Menu item deleted successfully!";
+                    } else {
+                        $error = "Failed to delete menu item.";
+                    }
+                    $stmt->close();
+                }
+                break;
+                
+            case 'update_stock':
+                $item_id = intval($_POST['item_id']);
+                $stock = intval($_POST['stock']);
+                
+                $stmt = $conn->prepare("UPDATE menu_item SET STOCK_LEVEL = ? WHERE ITEM_ID = ?");
+                if ($stmt) {
+                    $stmt->bind_param("ii", $stock, $item_id);
+                    if ($stmt->execute()) {
+                        $message = "Stock updated successfully!";
+                    } else {
+                        $error = "Failed to update stock.";
+                    }
+                    $stmt->close();
                 }
                 break;
         }
@@ -64,12 +97,34 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 
 // Get all menu items
-$stmt = $conn->prepare("SELECT * FROM menu_item ORDER BY ITEM_CATEGORY, ITEM_NAME");
-$stmt->execute();
-$menuItems = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$menu_items = [];
+$result = $conn->query("SELECT mi.*, a.ADM_USERNAME as admin_name FROM menu_item mi LEFT JOIN admin a ON mi.ADMIN_ID = a.ADM_ID ORDER BY mi.ITEM_CATEGORY, mi.ITEM_NAME");
+if ($result) {
+    $menu_items = $result->fetch_all(MYSQLI_ASSOC);
+}
 
 // Get categories
-$categories = array_unique(array_column($menuItems, 'ITEM_CATEGORY'));
+$categories = [];
+$result = $conn->query("SELECT DISTINCT ITEM_CATEGORY FROM menu_item WHERE active = 1 ORDER BY ITEM_CATEGORY");
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $categories[] = $row['ITEM_CATEGORY'];
+    }
+}
+
+// Get statistics
+$stats = [];
+$result = $conn->query("SELECT COUNT(*) as total FROM menu_item WHERE active = 1");
+$stats['total_items'] = $result ? $result->fetch_assoc()['total'] : 0;
+
+$result = $conn->query("SELECT COUNT(*) as total FROM menu_item WHERE STOCK_LEVEL <= 10 AND active = 1");
+$stats['low_stock'] = $result ? $result->fetch_assoc()['total'] : 0;
+
+$result = $conn->query("SELECT COUNT(*) as total FROM menu_item WHERE active = 0");
+$stats['inactive_items'] = $result ? $result->fetch_assoc()['total'] : 0;
+
+$result = $conn->query("SELECT COUNT(DISTINCT ITEM_CATEGORY) as total FROM menu_item WHERE active = 1");
+$stats['categories'] = $result ? $result->fetch_assoc()['total'] : 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -91,8 +146,11 @@ $categories = array_unique(array_column($menuItems, 'ITEM_CATEGORY'));
                     <h1>Menu Management</h1>
                 </div>
                 <div class="header-actions">
-                    <button class="btn btn-primary" onclick="openAddModal()">
+                    <button class="btn btn-primary" onclick="openAddItemModal()">
                         <i class="fas fa-plus"></i> Add Item
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportMenu()">
+                        <i class="fas fa-download"></i> Export
                     </button>
                 </div>
             </header>
@@ -105,6 +163,45 @@ $categories = array_unique(array_column($menuItems, 'ITEM_CATEGORY'));
                 <div class="alert alert-error"><?php echo $error; ?></div>
             <?php endif; ?>
             
+            <div class="dashboard-stats">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Total Items</h3>
+                        <p><?php echo number_format($stats['total_items']); ?></p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Low Stock</h3>
+                        <p><?php echo number_format($stats['low_stock']); ?></p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-eye-slash"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Inactive Items</h3>
+                        <p><?php echo number_format($stats['inactive_items']); ?></p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Categories</h3>
+                        <p><?php echo number_format($stats['categories']); ?></p>
+                    </div>
+                </div>
+            </div>
+            
             <div class="card">
                 <div class="card-header">
                     <h2>Menu Items</h2>
@@ -112,11 +209,15 @@ $categories = array_unique(array_column($menuItems, 'ITEM_CATEGORY'));
                         <select id="category-filter" class="form-control">
                             <option value="">All Categories</option>
                             <?php foreach ($categories as $category): ?>
-                                <option value="<?php echo htmlspecialchars($category); ?>">
-                                    <?php echo htmlspecialchars($category); ?>
-                                </option>
+                                <option value="<?php echo $category; ?>"><?php echo $category; ?></option>
                             <?php endforeach; ?>
                         </select>
+                        <select id="status-filter" class="form-control">
+                            <option value="">All Status</option>
+                            <option value="1">Active</option>
+                            <option value="0">Inactive</option>
+                        </select>
+                        <input type="text" id="search-filter" class="form-control" placeholder="Search items...">
                     </div>
                 </div>
                 <div class="card-body">
@@ -134,22 +235,28 @@ $categories = array_unique(array_column($menuItems, 'ITEM_CATEGORY'));
                                 </tr>
                             </thead>
                             <tbody id="menu-table">
-                                <?php foreach ($menuItems as $item): ?>
-                                    <tr data-category="<?php echo htmlspecialchars($item['ITEM_CATEGORY']); ?>">
+                                <?php foreach ($menu_items as $item): ?>
+                                    <tr data-category="<?php echo $item['ITEM_CATEGORY']; ?>" 
+                                        data-status="<?php echo $item['active']; ?>"
+                                        data-search="<?php echo strtolower($item['ITEM_NAME'] . ' ' . $item['ITEM_DESCRIPTION']); ?>">
                                         <td>
-                                            <div class="menu-item-image-small">
-                                                <img src="<?php echo !empty($item['image']) ? htmlspecialchars($item['image']) : '/placeholder.svg?height=50&width=50'; ?>" alt="<?php echo htmlspecialchars($item['ITEM_NAME']); ?>">
-                                            </div>
+                                            <img src="<?php echo $item['image'] ?: '/placeholder.svg?height=50&width=50'; ?>" 
+                                                 alt="<?php echo htmlspecialchars($item['ITEM_NAME']); ?>" 
+                                                 class="item-image">
                                         </td>
                                         <td>
-                                            <div class="menu-item-info">
+                                            <div class="item-info">
                                                 <strong><?php echo htmlspecialchars($item['ITEM_NAME']); ?></strong>
-                                                <p><?php echo htmlspecialchars($item['ITEM_DESCRIPTION']); ?></p>
+                                                <small><?php echo htmlspecialchars(substr($item['ITEM_DESCRIPTION'], 0, 50)) . '...'; ?></small>
                                             </div>
                                         </td>
                                         <td><?php echo htmlspecialchars($item['ITEM_CATEGORY']); ?></td>
-                                        <td><?php echo formatCurrency($item['ITEM_PRICE']); ?></td>
-                                        <td><?php echo htmlspecialchars($item['STOCK_LEVEL']); ?></td>
+                                        <td>RM <?php echo number_format($item['ITEM_PRICE'], 2); ?></td>
+                                        <td>
+                                            <span class="stock-level <?php echo $item['STOCK_LEVEL'] <= 10 ? 'low' : ''; ?>">
+                                                <?php echo $item['STOCK_LEVEL']; ?>
+                                            </span>
+                                        </td>
                                         <td>
                                             <span class="status-badge <?php echo $item['active'] ? 'active' : 'inactive'; ?>">
                                                 <?php echo $item['active'] ? 'Active' : 'Inactive'; ?>
@@ -160,7 +267,10 @@ $categories = array_unique(array_column($menuItems, 'ITEM_CATEGORY'));
                                                 <button class="btn-icon" onclick="editItem(<?php echo htmlspecialchars(json_encode($item)); ?>)" title="Edit">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
-                                                <button class="btn-icon" onclick="deleteItem(<?php echo $item['ITEM_ID']; ?>)" title="Delete">
+                                                <button class="btn-icon" onclick="updateStock(<?php echo $item['ITEM_ID']; ?>, <?php echo $item['STOCK_LEVEL']; ?>)" title="Update Stock">
+                                                    <i class="fas fa-boxes"></i>
+                                                </button>
+                                                <button class="btn-icon btn-danger" onclick="deleteItem(<?php echo $item['ITEM_ID']; ?>, '<?php echo htmlspecialchars($item['ITEM_NAME']); ?>')" title="Delete">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </div>
@@ -175,7 +285,7 @@ $categories = array_unique(array_column($menuItems, 'ITEM_CATEGORY'));
         </div>
     </div>
     
-    <!-- Add/Edit Modal -->
+    <!-- Add/Edit Item Modal -->
     <div class="modal" id="item-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -184,53 +294,89 @@ $categories = array_unique(array_column($menuItems, 'ITEM_CATEGORY'));
             </div>
             <div class="modal-body">
                 <form id="item-form" method="post">
-                    <input type="hidden" id="item-id" name="id">
-                    <input type="hidden" id="form-action" name="action" value="add">
+                    <input type="hidden" id="item-action" name="action" value="add_item">
+                    <input type="hidden" id="item-id" name="item_id">
                     
                     <div class="form-group">
-                        <label for="name" class="form-label">Name</label>
-                        <input type="text" id="name" name="name" class="form-control" required>
+                        <label for="item-name" class="form-label">Item Name</label>
+                        <input type="text" id="item-name" name="name" class="form-control" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="description" class="form-label">Description</label>
-                        <textarea id="description" name="description" class="form-control" rows="3"></textarea>
+                        <label for="item-category" class="form-label">Category</label>
+                        <select id="item-category" name="category" class="form-control" required>
+                            <option value="">Select Category</option>
+                            <option value="Coffee">Coffee</option>
+                            <option value="Beverages">Beverages</option>
+                            <option value="Local Courses">Local Courses</option>
+                            <option value="Italian Cuisines">Italian Cuisines</option>
+                            <option value="Western Favorites">Western Favorites</option>
+                            <option value="Mexican Cuisines">Mexican Cuisines</option>
+                            <option value="International Cuisines">International Cuisines</option>
+                            <option value="Salads">Salads</option>
+                            <option value="Side Dishes">Side Dishes</option>
+                            <option value="Appetizers">Appetizers</option>
+                            <option value="Desserts">Desserts</option>
+                            <option value="Pastries">Pastries</option>
+                        </select>
                     </div>
                     
                     <div class="form-group">
-                        <label for="price" class="form-label">Price (RM)</label>
-                        <input type="number" id="price" name="price" class="form-control" step="0.01" min="0" required>
+                        <label for="item-price" class="form-label">Price (RM)</label>
+                        <input type="number" id="item-price" name="price" class="form-control" step="0.01" min="0" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="category" class="form-label">Category</label>
-                        <input type="text" id="category" name="category" class="form-control" list="categories" required>
-                        <datalist id="categories">
-                            <?php foreach ($categories as $category): ?>
-                                <option value="<?php echo htmlspecialchars($category); ?>">
-                            <?php endforeach; ?>
-                        </datalist>
+                        <label for="item-stock" class="form-label">Stock Level</label>
+                        <input type="number" id="item-stock" name="stock" class="form-control" min="0" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="image" class="form-label">Image URL</label>
-                        <input type="url" id="image" name="image" class="form-control">
+                        <label for="item-description" class="form-label">Description</label>
+                        <textarea id="item-description" name="description" class="form-control" rows="3"></textarea>
                     </div>
-
+                    
                     <div class="form-group">
-                        <label for="stock_level" class="form-label">Stock Level</label>
-                        <input type="number" id="stock_level" name="stock_level" class="form-control" value="1" required>
+                        <label for="item-image" class="form-label">Image URL</label>
+                        <input type="url" id="item-image" name="image" class="form-control">
                     </div>
                     
                     <div class="form-group" id="active-group" style="display: none;">
-                        <label class="form-check">
-                            <input type="checkbox" id="active" name="active" class="form-check-input">
-                            <span class="form-check-label">Active</span>
+                        <label class="form-label">
+                            <input type="checkbox" id="item-active" name="active" value="1">
+                            Active
                         </label>
                     </div>
                     
                     <div class="form-actions">
-                        <button type="submit" class="btn btn-primary">Save Item</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('item-modal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="submit-btn">Add Item</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stock Update Modal -->
+    <div class="modal" id="stock-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Update Stock Level</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="stock-form" method="post">
+                    <input type="hidden" name="action" value="update_stock">
+                    <input type="hidden" id="stock-item-id" name="item_id">
+                    
+                    <div class="form-group">
+                        <label for="stock-level" class="form-label">Stock Level</label>
+                        <input type="number" id="stock-level" name="stock" class="form-control" min="0" required>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('stock-modal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Stock</button>
                     </div>
                 </form>
             </div>
@@ -238,46 +384,6 @@ $categories = array_unique(array_column($menuItems, 'ITEM_CATEGORY'));
     </div>
     
     <style>
-        .menu-item-image-small {
-            width: 50px;
-            height: 50px;
-            border-radius: 4px;
-            overflow: hidden;
-        }
-        
-        .menu-item-image-small img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .menu-item-info p {
-            margin: 5px 0 0 0;
-            color: #666;
-            font-size: 0.9rem;
-            max-width: 200px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-        
-        .status-badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-        
-        .status-badge.active {
-            background-color: rgba(76, 175, 80, 0.2);
-            color: #2e7d32;
-        }
-        
-        .status-badge.inactive {
-            background-color: rgba(244, 67, 54, 0.2);
-            color: #c62828;
-        }
-        
         .alert {
             padding: 15px;
             margin-bottom: 20px;
@@ -296,13 +402,61 @@ $categories = array_unique(array_column($menuItems, 'ITEM_CATEGORY'));
             border: 1px solid #f5c6cb;
         }
         
-        .form-check {
-            display: flex;
-            align-items: center;
+        .item-image {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
         }
         
-        .form-check-input {
-            margin-right: 10px;
+        .item-info strong {
+            display: block;
+        }
+        
+        .item-info small {
+            color: #666;
+            display: block;
+        }
+        
+        .stock-level {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .stock-level.low {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-badge.active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-badge.inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .card-filters {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .card-filters .form-control {
+            width: auto;
+            min-width: 150px;
         }
         
         .modal {
@@ -320,10 +474,9 @@ $categories = array_unique(array_column($menuItems, 'ITEM_CATEGORY'));
         
         .modal-content {
             background-color: white;
-            padding: 0;
             border-radius: 8px;
             width: 90%;
-            max-width: 500px;
+            max-width: 600px;
             max-height: 90vh;
             overflow-y: auto;
         }
@@ -336,8 +489,8 @@ $categories = array_unique(array_column($menuItems, 'ITEM_CATEGORY'));
             align-items: center;
         }
         
-        .modal-header h3 {
-            margin: 0;
+        .modal-body {
+            padding: 20px;
         }
         
         .close-modal {
@@ -351,146 +504,120 @@ $categories = array_unique(array_column($menuItems, 'ITEM_CATEGORY'));
         .close-modal:hover {
             color: #333;
         }
-        
-        .modal-body {
-            padding: 20px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        
-        .form-control:focus {
-            outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
-        }
-        
-        .form-actions {
-            text-align: right;
-        }
-        
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            text-decoration: none;
-            display: inline-block;
-        }
-        
-        .btn-primary {
-            background-color: #007bff;
-            color: white;
-        }
-        
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-        
-        .btn-icon {
-            background: none;
-            border: none;
-            padding: 5px;
-            cursor: pointer;
-            color: #666;
-            margin: 0 2px;
-        }
-        
-        .btn-icon:hover {
-            color: #333;
-        }
-        
-        .table-actions {
-            display: flex;
-            gap: 5px;
-        }
     </style>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Category filter
+            // Filter functionality
             const categoryFilter = document.getElementById('category-filter');
+            const statusFilter = document.getElementById('status-filter');
+            const searchFilter = document.getElementById('search-filter');
             const menuTable = document.getElementById('menu-table');
             
-            categoryFilter.addEventListener('change', function() {
-                const selectedCategory = this.value;
+            function filterItems() {
+                const categoryValue = categoryFilter.value;
+                const statusValue = statusFilter.value;
+                const searchValue = searchFilter.value.toLowerCase();
                 const rows = menuTable.querySelectorAll('tr');
                 
                 rows.forEach(row => {
                     const rowCategory = row.getAttribute('data-category');
-                    if (!selectedCategory || rowCategory === selectedCategory) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
+                    const rowStatus = row.getAttribute('data-status');
+                    const rowSearch = row.getAttribute('data-search');
+                    
+                    let showRow = true;
+                    
+                    if (categoryValue && rowCategory !== categoryValue) {
+                        showRow = false;
                     }
+                    
+                    if (statusValue && rowStatus !== statusValue) {
+                        showRow = false;
+                    }
+                    
+                    if (searchValue && !rowSearch.includes(searchValue)) {
+                        showRow = false;
+                    }
+                    
+                    row.style.display = showRow ? '' : 'none';
+                });
+            }
+            
+            categoryFilter.addEventListener('change', filterItems);
+            statusFilter.addEventListener('change', filterItems);
+            searchFilter.addEventListener('input', filterItems);
+            
+            // Modal functionality
+            const modals = document.querySelectorAll('.modal');
+            const closeButtons = document.querySelectorAll('.close-modal');
+            
+            closeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const modal = this.closest('.modal');
+                    modal.style.display = 'none';
                 });
             });
             
-            // Modal functionality
-            const modal = document.getElementById('item-modal');
-            const closeModal = document.querySelector('.close-modal');
-            
-            closeModal.addEventListener('click', function() {
-                modal.style.display = 'none';
-            });
-            
             window.addEventListener('click', function(event) {
-                if (event.target === modal) {
-                    modal.style.display = 'none';
-                }
+                modals.forEach(modal => {
+                    if (event.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                });
             });
         });
         
-        function openAddModal() {
-            document.getElementById('modal-title').textContent = 'Add Menu Item';
-            document.getElementById('form-action').value = 'add';
+        function openAddItemModal() {
             document.getElementById('item-form').reset();
+            document.getElementById('item-action').value = 'add_item';
+            document.getElementById('modal-title').textContent = 'Add Menu Item';
+            document.getElementById('submit-btn').textContent = 'Add Item';
             document.getElementById('active-group').style.display = 'none';
             document.getElementById('item-modal').style.display = 'flex';
         }
         
         function editItem(item) {
-            document.getElementById('modal-title').textContent = 'Edit Menu Item';
-            document.getElementById('form-action').value = 'update';
+            document.getElementById('item-action').value = 'update_item';
             document.getElementById('item-id').value = item.ITEM_ID;
-            document.getElementById('name').value = item.ITEM_NAME;
-            document.getElementById('description').value = item.ITEM_DESCRIPTION;
-            document.getElementById('price').value = item.ITEM_PRICE;
-            document.getElementById('category').value = item.ITEM_CATEGORY;
-            document.getElementById('image').value = item.image || '';
-            document.getElementById('stock_level').value = item.STOCK_LEVEL;
-            document.getElementById('active').checked = item.active == 1;
+            document.getElementById('item-name').value = item.ITEM_NAME;
+            document.getElementById('item-category').value = item.ITEM_CATEGORY;
+            document.getElementById('item-price').value = item.ITEM_PRICE;
+            document.getElementById('item-stock').value = item.STOCK_LEVEL;
+            document.getElementById('item-description').value = item.ITEM_DESCRIPTION;
+            document.getElementById('item-image').value = item.image || '';
+            document.getElementById('item-active').checked = item.active == 1;
+            
+            document.getElementById('modal-title').textContent = 'Edit Menu Item';
+            document.getElementById('submit-btn').textContent = 'Update Item';
             document.getElementById('active-group').style.display = 'block';
             document.getElementById('item-modal').style.display = 'flex';
         }
         
-        function deleteItem(id) {
-            if (confirm('Are you sure you want to delete this menu item?')) {
+        function updateStock(itemId, currentStock) {
+            document.getElementById('stock-item-id').value = itemId;
+            document.getElementById('stock-level').value = currentStock;
+            document.getElementById('stock-modal').style.display = 'flex';
+        }
+        
+        function deleteItem(itemId, itemName) {
+            if (confirm(`Are you sure you want to delete "${itemName}"?`)) {
                 const form = document.createElement('form');
                 form.method = 'post';
                 form.innerHTML = `
-                    <input type="hidden" name="action" value="delete">
-                    <input type="hidden" name="id" value="${id}">
+                    <input type="hidden" name="action" value="delete_item">
+                    <input type="hidden" name="item_id" value="${itemId}">
                 `;
                 document.body.appendChild(form);
                 form.submit();
             }
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        function exportMenu() {
+            window.open('../api/export-menu.php', '_blank');
         }
     </script>
 </body>

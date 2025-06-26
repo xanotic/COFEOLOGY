@@ -12,117 +12,107 @@ if (!isAdmin()) {
 $message = '';
 $error = '';
 
-// Handle order status updates
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
-    if ($_POST['action'] === 'update_status') {
-        $order_id = intval($_POST['order_id']);
-        $new_status = $_POST['status'];
-        
-        if (updateOrderStatus($conn, $order_id, $new_status)) {
-            $message = "Order status updated successfully!";
-        } else {
-            $error = "Failed to update order status.";
+// Handle form submissions
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    if (isset($_POST['action'])) {
+        switch ($_POST['action']) {
+            case 'update_status':
+                $order_id = intval($_POST['order_id']);
+                $status = $_POST['status'];
+                
+                $stmt = $conn->prepare("UPDATE `order` SET ORDER_STATUS = ? WHERE ORDER_ID = ?");
+                if ($stmt) {
+                    $stmt->bind_param("si", $status, $order_id);
+                    if ($stmt->execute()) {
+                        $message = "Order status updated successfully!";
+                    } else {
+                        $error = "Failed to update order status.";
+                    }
+                    $stmt->close();
+                }
+                break;
+                
+            case 'assign_staff':
+                $order_id = intval($_POST['order_id']);
+                $staff_id = intval($_POST['staff_id']);
+                
+                $stmt = $conn->prepare("UPDATE `order` SET STAFF_ID = ? WHERE ORDER_ID = ?");
+                if ($stmt) {
+                    $stmt->bind_param("ii", $staff_id, $order_id);
+                    if ($stmt->execute()) {
+                        $message = "Staff assigned successfully!";
+                    } else {
+                        $error = "Failed to assign staff.";
+                    }
+                    $stmt->close();
+                }
+                break;
+                
+            case 'update_payment':
+                $order_id = intval($_POST['order_id']);
+                $payment_status = $_POST['payment_status'];
+                
+                $stmt = $conn->prepare("UPDATE `order` SET PAYMENT_STATUS = ? WHERE ORDER_ID = ?");
+                if ($stmt) {
+                    $stmt->bind_param("si", $payment_status, $order_id);
+                    if ($stmt->execute()) {
+                        $message = "Payment status updated successfully!";
+                    } else {
+                        $error = "Failed to update payment status.";
+                    }
+                    $stmt->close();
+                }
+                break;
         }
     }
-    
-    if ($_POST['action'] === 'assign_staff') {
-        $order_id = intval($_POST['order_id']);
-        $staff_id = intval($_POST['staff_id']);
-        
-        if (assignStaffToOrder($conn, $order_id, $staff_id)) {
-            $message = "Staff assigned to order successfully!";
-        } else {
-            $error = "Failed to assign staff to order.";
-        }
-    }
 }
 
-// Get filter parameters
-$status_filter = $_GET['status'] ?? '';
-$date_filter = $_GET['date'] ?? '';
-
-// Build query with filters
-$query = "
-    SELECT 
-        o.ORDER_ID,
-        o.ORDER_NUMBER,
-        o.ORDER_TIME,
-        o.ORDER_DATE,
-        o.ORDER_TYPE,
-        o.ORDER_STATUS,
-        o.TOT_AMOUNT,
-        o.DELIVERY_ADDRESS,
-        o.PAYMENT_METHOD,
-        COALESCE(o.PAYMENT_STATUS, 'pending') as payment_status,
-        o.special_instructions,
-        o.pickup_time,
-        c.CUST_NAME as customer_name,
-        c.CUST_EMAIL as customer_email,
-        c.CUST_NPHONE as customer_phone,
-        s.STAFF_NAME as staff_name,
-        COUNT(ol.LISTING_ID) as item_count
-    FROM `order` o
-    JOIN customer c ON o.CUST_ID = c.CUST_ID
-    LEFT JOIN staff s ON o.STAFF_ID = s.STAFF_ID
-    LEFT JOIN order_listing ol ON o.ORDER_ID = ol.ORDER_ID
-";
-
-$conditions = [];
-$params = [];
-$types = '';
-
-if ($status_filter) {
-    $conditions[] = "o.ORDER_STATUS = ?";
-    $params[] = $status_filter;
-    $types .= 's';
+// Get all orders with customer and staff information
+$orders = [];
+$query = "SELECT o.*, c.CUST_NAME, c.CUST_EMAIL, c.CUST_NPHONE, s.STAFF_NAME,
+          COALESCE(o.PAYMENT_STATUS, 'pending') as payment_status
+          FROM `order` o 
+          LEFT JOIN customer c ON o.CUST_ID = c.CUST_ID 
+          LEFT JOIN staff s ON o.STAFF_ID = s.STAFF_ID 
+          ORDER BY o.ORDER_DATE DESC, o.ORDER_TIME DESC";
+$result = $conn->query($query);
+if ($result) {
+    $orders = $result->fetch_all(MYSQLI_ASSOC);
 }
 
-if ($date_filter) {
-    $conditions[] = "o.ORDER_DATE = ?";
-    $params[] = $date_filter;
-    $types .= 's';
+// Get all staff for assignment
+$staff = [];
+$result = $conn->query("SELECT STAFF_ID, STAFF_NAME FROM staff ORDER BY STAFF_NAME");
+if ($result) {
+    $staff = $result->fetch_all(MYSQLI_ASSOC);
 }
-
-if (!empty($conditions)) {
-    $query .= " WHERE " . implode(" AND ", $conditions);
-}
-
-$query .= " GROUP BY o.ORDER_ID ORDER BY o.ORDER_DATE DESC, o.ORDER_TIME DESC";
-
-$stmt = $conn->prepare($query);
-if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-}
-$stmt->execute();
-$orders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
-// Get all staff for assignment dropdown
-$staff_stmt = $conn->prepare("SELECT STAFF_ID, STAFF_NAME FROM staff ORDER BY STAFF_NAME");
-$staff_stmt->execute();
-$staff_members = $staff_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
 // Get order statistics
-$stats_query = "
-    SELECT 
-        COUNT(*) as total_orders,
-        SUM(CASE WHEN ORDER_STATUS = 'pending' THEN 1 ELSE 0 END) as pending_orders,
-        SUM(CASE WHEN ORDER_STATUS = 'preparing' THEN 1 ELSE 0 END) as preparing_orders,
-        SUM(CASE WHEN ORDER_STATUS = 'ready' THEN 1 ELSE 0 END) as ready_orders,
-        SUM(CASE WHEN ORDER_STATUS = 'completed' THEN 1 ELSE 0 END) as completed_orders
-    FROM `order`
-    WHERE ORDER_DATE = CURDATE()
-";
-$stats_stmt = $conn->prepare($stats_query);
-$stats_stmt->execute();
-$stats = $stats_stmt->get_result()->fetch_assoc();
-?>
+$stats = [];
 
+// Total orders
+$result = $conn->query("SELECT COUNT(*) as total FROM `order`");
+$stats['total_orders'] = $result ? $result->fetch_assoc()['total'] : 0;
+
+// Pending orders
+$result = $conn->query("SELECT COUNT(*) as total FROM `order` WHERE ORDER_STATUS = 'pending'");
+$stats['pending_orders'] = $result ? $result->fetch_assoc()['total'] : 0;
+
+// Today's orders
+$today = date('Y-m-d');
+$result = $conn->query("SELECT COUNT(*) as total FROM `order` WHERE ORDER_DATE = '$today'");
+$stats['today_orders'] = $result ? $result->fetch_assoc()['total'] : 0;
+
+// Today's revenue
+$result = $conn->query("SELECT SUM(TOT_AMOUNT) as total FROM `order` WHERE ORDER_DATE = '$today' AND PAYMENT_STATUS = 'completed'");
+$stats['today_revenue'] = $result ? ($result->fetch_assoc()['total'] ?: 0) : 0;
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Management - Café Delights</title>
+    <title>Orders Management - Café Delights</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -134,11 +124,14 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
         <div class="dashboard-content">
             <header class="dashboard-header">
                 <div class="header-title">
-                    <h1>Order Management</h1>
+                    <h1>Orders Management</h1>
                 </div>
                 <div class="header-actions">
-                    <button class="btn btn-secondary" onclick="refreshOrders()">
-                        <i class="fas fa-refresh"></i> Refresh
+                    <button class="btn btn-secondary" onclick="exportOrders()">
+                        <i class="fas fa-download"></i> Export
+                    </button>
+                    <button class="btn btn-primary" onclick="refreshOrders()">
+                        <i class="fas fa-sync-alt"></i> Refresh
                     </button>
                 </div>
             </header>
@@ -151,84 +144,73 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
                 <div class="alert alert-error"><?php echo $error; ?></div>
             <?php endif; ?>
             
-            <!-- Order Statistics -->
-            <div class="stats-grid">
+            <div class="dashboard-stats">
                 <div class="stat-card">
                     <div class="stat-icon">
                         <i class="fas fa-shopping-cart"></i>
                     </div>
-                    <div class="stat-content">
-                        <h3><?php echo $stats['total_orders']; ?></h3>
-                        <p>Total Orders Today</p>
+                    <div class="stat-info">
+                        <h3>Total Orders</h3>
+                        <p><?php echo number_format($stats['total_orders']); ?></p>
                     </div>
                 </div>
-                <div class="stat-card pending">
+                <div class="stat-card">
                     <div class="stat-icon">
                         <i class="fas fa-clock"></i>
                     </div>
-                    <div class="stat-content">
-                        <h3><?php echo $stats['pending_orders']; ?></h3>
-                        <p>Pending Orders</p>
+                    <div class="stat-info">
+                        <h3>Pending Orders</h3>
+                        <p><?php echo number_format($stats['pending_orders']); ?></p>
                     </div>
                 </div>
-                <div class="stat-card preparing">
+                <div class="stat-card">
                     <div class="stat-icon">
-                        <i class="fas fa-utensils"></i>
+                        <i class="fas fa-calendar-day"></i>
                     </div>
-                    <div class="stat-content">
-                        <h3><?php echo $stats['preparing_orders']; ?></h3>
-                        <p>Preparing</p>
+                    <div class="stat-info">
+                        <h3>Today's Orders</h3>
+                        <p><?php echo number_format($stats['today_orders']); ?></p>
                     </div>
                 </div>
-                <div class="stat-card ready">
+                <div class="stat-card">
                     <div class="stat-icon">
-                        <i class="fas fa-check-circle"></i>
+                        <i class="fas fa-money-bill-wave"></i>
                     </div>
-                    <div class="stat-content">
-                        <h3><?php echo $stats['ready_orders']; ?></h3>
-                        <p>Ready</p>
+                    <div class="stat-info">
+                        <h3>Today's Revenue</h3>
+                        <p>RM <?php echo number_format($stats['today_revenue'], 2); ?></p>
                     </div>
                 </div>
             </div>
             
-            <!-- Filters -->
             <div class="card">
                 <div class="card-header">
-                    <h2>Filter Orders</h2>
-                </div>
-                <div class="card-body">
-                    <form method="GET" class="filter-form">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="status">Status</label>
-                                <select name="status" id="status" class="form-control">
-                                    <option value="">All Statuses</option>
-                                    <option value="pending" <?php echo $status_filter === 'pending' ? 'selected' : ''; ?>>Pending</option>
-                                    <option value="preparing" <?php echo $status_filter === 'preparing' ? 'selected' : ''; ?>>Preparing</option>
-                                    <option value="ready" <?php echo $status_filter === 'ready' ? 'selected' : ''; ?>>Ready</option>
-                                    <option value="out_for_delivery" <?php echo $status_filter === 'out_for_delivery' ? 'selected' : ''; ?>>Out for Delivery</option>
-                                    <option value="completed" <?php echo $status_filter === 'completed' ? 'selected' : ''; ?>>Completed</option>
-                                    <option value="cancelled" <?php echo $status_filter === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="date">Date</label>
-                                <input type="date" name="date" id="date" class="form-control" value="<?php echo htmlspecialchars($date_filter); ?>">
-                            </div>
-                            <div class="form-group">
-                                <label>&nbsp;</label>
-                                <button type="submit" class="btn btn-primary">Filter</button>
-                                <a href="orders.php" class="btn btn-secondary">Clear</a>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            
-            <!-- Orders Table -->
-            <div class="card">
-                <div class="card-header">
-                    <h2>Orders (<?php echo count($orders); ?>)</h2>
+                    <h2>All Orders</h2>
+                    <div class="card-filters">
+                        <select id="status-filter" class="form-control">
+                            <option value="">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="preparing">Preparing</option>
+                            <option value="ready">Ready</option>
+                            <option value="out_for_delivery">Out for Delivery</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <select id="type-filter" class="form-control">
+                            <option value="">All Types</option>
+                            <option value="dine-in">Dine In</option>
+                            <option value="takeaway">Takeaway</option>
+                            <option value="delivery">Delivery</option>
+                        </select>
+                        <select id="payment-filter" class="form-control">
+                            <option value="">All Payments</option>
+                            <option value="pending">Payment Pending</option>
+                            <option value="completed">Payment Completed</option>
+                            <option value="failed">Payment Failed</option>
+                        </select>
+                        <input type="date" id="date-filter" class="form-control">
+                        <input type="text" id="search-filter" class="form-control" placeholder="Search orders...">
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -239,7 +221,6 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
                                     <th>Customer</th>
                                     <th>Date/Time</th>
                                     <th>Type</th>
-                                    <th>Items</th>
                                     <th>Amount</th>
                                     <th>Status</th>
                                     <th>Payment</th>
@@ -247,55 +228,63 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="orders-table">
                                 <?php foreach ($orders as $order): ?>
-                                    <tr>
+                                    <tr data-status="<?php echo $order['ORDER_STATUS']; ?>" 
+                                        data-type="<?php echo $order['ORDER_TYPE']; ?>"
+                                        data-payment="<?php echo $order['payment_status']; ?>"
+                                        data-date="<?php echo $order['ORDER_DATE']; ?>"
+                                        data-search="<?php echo strtolower($order['ORDER_NUMBER'] . ' ' . $order['CUST_NAME'] . ' ' . $order['CUST_EMAIL']); ?>">
                                         <td>
-                                            <strong><?php echo htmlspecialchars($order['ORDER_NUMBER']); ?></strong>
+                                            <strong><?php echo $order['ORDER_NUMBER']; ?></strong>
                                         </td>
                                         <td>
                                             <div class="customer-info">
-                                                <strong><?php echo htmlspecialchars($order['customer_name']); ?></strong>
-                                                <small><?php echo htmlspecialchars($order['customer_email']); ?></small>
-                                                <small><?php echo htmlspecialchars($order['customer_phone']); ?></small>
+                                                <strong><?php echo htmlspecialchars($order['CUST_NAME']); ?></strong>
+                                                <small><?php echo htmlspecialchars($order['CUST_EMAIL']); ?></small>
+                                                <small><?php echo htmlspecialchars($order['CUST_NPHONE']); ?></small>
                                             </div>
                                         </td>
                                         <td>
                                             <div class="datetime-info">
-                                                <strong><?php echo date('M j, Y', strtotime($order['ORDER_DATE'])); ?></strong>
-                                                <small><?php echo date('g:i A', strtotime($order['ORDER_TIME'])); ?></small>
+                                                <strong><?php echo date('M d, Y', strtotime($order['ORDER_DATE'])); ?></strong>
+                                                <small><?php echo date('h:i A', strtotime($order['ORDER_TIME'])); ?></small>
                                             </div>
                                         </td>
                                         <td>
-                                            <span class="order-type <?php echo $order['ORDER_TYPE']; ?>">
-                                                <?php echo ucfirst(str_replace('_', ' ', $order['ORDER_TYPE'])); ?>
+                                            <span class="type-badge <?php echo $order['ORDER_TYPE']; ?>">
+                                                <?php echo ucfirst(str_replace('-', ' ', $order['ORDER_TYPE'])); ?>
                                             </span>
                                         </td>
-                                        <td><?php echo $order['item_count']; ?> items</td>
-                                        <td><strong><?php echo formatCurrency($order['TOT_AMOUNT']); ?></strong></td>
+                                        <td>
+                                            <strong>RM <?php echo number_format($order['TOT_AMOUNT'], 2); ?></strong>
+                                        </td>
                                         <td>
                                             <span class="status-badge <?php echo $order['ORDER_STATUS']; ?>">
                                                 <?php echo ucfirst(str_replace('_', ' ', $order['ORDER_STATUS'])); ?>
                                             </span>
                                         </td>
                                         <td>
-                                            <span class="payment-status <?php echo $order['payment_status']; ?>">
+                                            <span class="payment-badge <?php echo $order['payment_status']; ?>">
                                                 <?php echo ucfirst($order['payment_status']); ?>
                                             </span>
                                         </td>
                                         <td>
-                                            <?php echo $order['staff_name'] ? htmlspecialchars($order['staff_name']) : 'Unassigned'; ?>
+                                            <?php echo $order['STAFF_NAME'] ? htmlspecialchars($order['STAFF_NAME']) : 'Unassigned'; ?>
                                         </td>
                                         <td>
                                             <div class="table-actions">
-                                                <button class="btn-icon" onclick="viewOrder(<?php echo $order['ORDER_ID']; ?>)" title="View Details">
+                                                <button class="btn-icon" onclick="viewOrderDetails(<?php echo $order['ORDER_ID']; ?>)" title="View Details">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
-                                                <button class="btn-icon" onclick="updateStatus(<?php echo $order['ORDER_ID']; ?>, '<?php echo $order['ORDER_STATUS']; ?>')" title="Update Status">
+                                                <button class="btn-icon" onclick="updateOrderStatus(<?php echo $order['ORDER_ID']; ?>, '<?php echo $order['ORDER_STATUS']; ?>')" title="Update Status">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
-                                                <button class="btn-icon" onclick="assignStaff(<?php echo $order['ORDER_ID']; ?>)" title="Assign Staff">
+                                                <button class="btn-icon" onclick="assignStaff(<?php echo $order['ORDER_ID']; ?>, <?php echo $order['STAFF_ID'] ?: 0; ?>)" title="Assign Staff">
                                                     <i class="fas fa-user-plus"></i>
+                                                </button>
+                                                <button class="btn-icon" onclick="updatePaymentStatus(<?php echo $order['ORDER_ID']; ?>, '<?php echo $order['payment_status']; ?>')" title="Update Payment">
+                                                    <i class="fas fa-credit-card"></i>
                                                 </button>
                                             </div>
                                         </td>
@@ -309,7 +298,7 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
         </div>
     </div>
     
-    <!-- Status Update Modal -->
+    <!-- Update Status Modal -->
     <div class="modal" id="status-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -322,8 +311,8 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
                     <input type="hidden" id="status-order-id" name="order_id">
                     
                     <div class="form-group">
-                        <label for="new-status" class="form-label">New Status</label>
-                        <select id="new-status" name="status" class="form-control" required>
+                        <label for="order-status" class="form-label">Order Status</label>
+                        <select id="order-status" name="status" class="form-control" required>
                             <option value="pending">Pending</option>
                             <option value="preparing">Preparing</option>
                             <option value="ready">Ready</option>
@@ -334,6 +323,7 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
                     </div>
                     
                     <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('status-modal')">Cancel</button>
                         <button type="submit" class="btn btn-primary">Update Status</button>
                     </div>
                 </form>
@@ -341,7 +331,7 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
         </div>
     </div>
     
-    <!-- Staff Assignment Modal -->
+    <!-- Assign Staff Modal -->
     <div class="modal" id="staff-modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -354,18 +344,19 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
                     <input type="hidden" id="staff-order-id" name="order_id">
                     
                     <div class="form-group">
-                        <label for="staff-select" class="form-label">Select Staff Member</label>
+                        <label for="staff-select" class="form-label">Select Staff</label>
                         <select id="staff-select" name="staff_id" class="form-control" required>
-                            <option value="">Choose staff member...</option>
-                            <?php foreach ($staff_members as $staff): ?>
-                                <option value="<?php echo $staff['STAFF_ID']; ?>">
-                                    <?php echo htmlspecialchars($staff['STAFF_NAME']); ?>
+                            <option value="">Select Staff Member</option>
+                            <?php foreach ($staff as $member): ?>
+                                <option value="<?php echo $member['STAFF_ID']; ?>">
+                                    <?php echo htmlspecialchars($member['STAFF_NAME']); ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                     
                     <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('staff-modal')">Cancel</button>
                         <button type="submit" class="btn btn-primary">Assign Staff</button>
                     </div>
                 </form>
@@ -373,116 +364,37 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
         </div>
     </div>
     
+    <!-- Payment Status Modal -->
+    <div class="modal" id="payment-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Update Payment Status</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="payment-form" method="post">
+                    <input type="hidden" name="action" value="update_payment">
+                    <input type="hidden" id="payment-order-id" name="order_id">
+                    
+                    <div class="form-group">
+                        <label for="payment-status" class="form-label">Payment Status</label>
+                        <select id="payment-status" name="payment_status" class="form-control" required>
+                            <option value="pending">Pending</option>
+                            <option value="completed">Completed</option>
+                            <option value="failed">Failed</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('payment-modal')">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Update Payment</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
     <style>
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        
-        .stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            color: white;
-            background-color: #007bff;
-        }
-        
-        .stat-card.pending .stat-icon { background-color: #ffc107; }
-        .stat-card.preparing .stat-icon { background-color: #fd7e14; }
-        .stat-card.ready .stat-icon { background-color: #28a745; }
-        
-        .stat-content h3 {
-            margin: 0;
-            font-size: 24px;
-            font-weight: bold;
-        }
-        
-        .stat-content p {
-            margin: 0;
-            color: #666;
-            font-size: 14px;
-        }
-        
-        .filter-form .form-row {
-            display: flex;
-            gap: 20px;
-            align-items: end;
-        }
-        
-        .customer-info {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .customer-info small {
-            color: #666;
-            font-size: 12px;
-        }
-        
-        .datetime-info {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .datetime-info small {
-            color: #666;
-            font-size: 12px;
-        }
-        
-        .order-type {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        
-        .order-type.delivery { background-color: #e3f2fd; color: #1976d2; }
-        .order-type.takeaway { background-color: #f3e5f5; color: #7b1fa2; }
-        .order-type.dine-in { background-color: #e8f5e8; color: #388e3c; }
-        
-        .status-badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        
-        .status-badge.pending { background-color: #fff3cd; color: #856404; }
-        .status-badge.preparing { background-color: #ffeaa7; color: #d63031; }
-        .status-badge.ready { background-color: #d4edda; color: #155724; }
-        .status-badge.out_for_delivery { background-color: #cce5ff; color: #004085; }
-        .status-badge.completed { background-color: #d1ecf1; color: #0c5460; }
-        .status-badge.cancelled { background-color: #f8d7da; color: #721c24; }
-        
-        .payment-status {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        
-        .payment-status.pending { background-color: #fff3cd; color: #856404; }
-        .payment-status.completed { background-color: #d4edda; color: #155724; }
-        .payment-status.failed { background-color: #f8d7da; color: #721c24; }
-        
         .alert {
             padding: 15px;
             margin-bottom: 20px;
@@ -501,6 +413,101 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
             border: 1px solid #f5c6cb;
         }
         
+        .customer-info strong {
+            display: block;
+        }
+        
+        .customer-info small {
+            color: #666;
+            display: block;
+        }
+        
+        .datetime-info strong {
+            display: block;
+        }
+        
+        .datetime-info small {
+            color: #666;
+        }
+        
+        .type-badge, .status-badge, .payment-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .type-badge.dine-in {
+            background-color: #e2e3e5;
+            color: #495057;
+        }
+        
+        .type-badge.takeaway {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .type-badge.delivery {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+        
+        .status-badge.pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-badge.preparing {
+            background-color: #cce5ff;
+            color: #004085;
+        }
+        
+        .status-badge.ready {
+            background-color: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .status-badge.out_for_delivery {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-badge.completed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-badge.cancelled {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .payment-badge.pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .payment-badge.completed {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .payment-badge.failed {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .card-filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .card-filters .form-control {
+            width: auto;
+            min-width: 120px;
+        }
+        
         .modal {
             display: none;
             position: fixed;
@@ -516,10 +523,11 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
         
         .modal-content {
             background-color: white;
-            padding: 0;
             border-radius: 8px;
             width: 90%;
-            max-width: 400px;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
         }
         
         .modal-header {
@@ -530,8 +538,8 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
             align-items: center;
         }
         
-        .modal-header h3 {
-            margin: 0;
+        .modal-body {
+            padding: 20px;
         }
         
         .close-modal {
@@ -545,82 +553,73 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
         .close-modal:hover {
             color: #333;
         }
-        
-        .modal-body {
-            padding: 20px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        
-        .form-actions {
-            text-align: right;
-        }
-        
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            text-decoration: none;
-            display: inline-block;
-            margin-left: 10px;
-        }
-        
-        .btn-primary {
-            background-color: #007bff;
-            color: white;
-        }
-        
-        .btn-secondary {
-            background-color: #6c757d;
-            color: white;
-        }
-        
-        .btn-icon {
-            background: none;
-            border: none;
-            padding: 5px;
-            cursor: pointer;
-            color: #666;
-            margin: 0 2px;
-        }
-        
-        .btn-icon:hover {
-            color: #333;
-        }
-        
-        .table-actions {
-            display: flex;
-            gap: 5px;
-        }
     </style>
     
     <script>
-        // Modal functionality
         document.addEventListener('DOMContentLoaded', function() {
+            // Filter functionality
+            const statusFilter = document.getElementById('status-filter');
+            const typeFilter = document.getElementById('type-filter');
+            const paymentFilter = document.getElementById('payment-filter');
+            const dateFilter = document.getElementById('date-filter');
+            const searchFilter = document.getElementById('search-filter');
+            const ordersTable = document.getElementById('orders-table');
+            
+            function filterOrders() {
+                const statusValue = statusFilter.value;
+                const typeValue = typeFilter.value;
+                const paymentValue = paymentFilter.value;
+                const dateValue = dateFilter.value;
+                const searchValue = searchFilter.value.toLowerCase();
+                const rows = ordersTable.querySelectorAll('tr');
+                
+                rows.forEach(row => {
+                    const rowStatus = row.getAttribute('data-status');
+                    const rowType = row.getAttribute('data-type');
+                    const rowPayment = row.getAttribute('data-payment');
+                    const rowDate = row.getAttribute('data-date');
+                    const rowSearch = row.getAttribute('data-search');
+                    
+                    let showRow = true;
+                    
+                    if (statusValue && rowStatus !== statusValue) {
+                        showRow = false;
+                    }
+                    
+                    if (typeValue && rowType !== typeValue) {
+                        showRow = false;
+                    }
+                    
+                    if (paymentValue && rowPayment !== paymentValue) {
+                        showRow = false;
+                    }
+                    
+                    if (dateValue && rowDate !== dateValue) {
+                        showRow = false;
+                    }
+                    
+                    if (searchValue && !rowSearch.includes(searchValue)) {
+                        showRow = false;
+                    }
+                    
+                    row.style.display = showRow ? '' : 'none';
+                });
+            }
+            
+            statusFilter.addEventListener('change', filterOrders);
+            typeFilter.addEventListener('change', filterOrders);
+            paymentFilter.addEventListener('change', filterOrders);
+            dateFilter.addEventListener('change', filterOrders);
+            searchFilter.addEventListener('input', filterOrders);
+            
+            // Modal functionality
             const modals = document.querySelectorAll('.modal');
             const closeButtons = document.querySelectorAll('.close-modal');
             
             closeButtons.forEach(button => {
                 button.addEventListener('click', function() {
-                    this.closest('.modal').style.display = 'none';
+                    const modal = this.closest('.modal');
+                    modal.style.display = 'none';
                 });
             });
             
@@ -633,24 +632,38 @@ $stats = $stats_stmt->get_result()->fetch_assoc();
             });
         });
         
-        function updateStatus(orderId, currentStatus) {
+        function updateOrderStatus(orderId, currentStatus) {
             document.getElementById('status-order-id').value = orderId;
-            document.getElementById('new-status').value = currentStatus;
+            document.getElementById('order-status').value = currentStatus;
             document.getElementById('status-modal').style.display = 'flex';
         }
         
-        function assignStaff(orderId) {
+        function assignStaff(orderId, currentStaffId) {
             document.getElementById('staff-order-id').value = orderId;
+            document.getElementById('staff-select').value = currentStaffId;
             document.getElementById('staff-modal').style.display = 'flex';
         }
         
-        function viewOrder(orderId) {
-            // Implement order details view
-            window.location.href = `order-details.php?id=${orderId}`;
+        function updatePaymentStatus(orderId, currentPaymentStatus) {
+            document.getElementById('payment-order-id').value = orderId;
+            document.getElementById('payment-status').value = currentPaymentStatus;
+            document.getElementById('payment-modal').style.display = 'flex';
+        }
+        
+        function viewOrderDetails(orderId) {
+            window.location.href = 'order-details.php?id=' + orderId;
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        function exportOrders() {
+            window.open('../api/export-orders.php', '_blank');
         }
         
         function refreshOrders() {
-            window.location.reload();
+            location.reload();
         }
     </script>
 </body>
