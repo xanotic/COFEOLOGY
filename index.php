@@ -310,16 +310,16 @@ if(file_exists('includes/functions.php')) {
                                     $itemName = $item['name'] ?? 'Unknown Item';
                                     $itemDescription = $item['description'] ?? 'No description available';
                                     $itemPrice = $item['price'] ?? 0.00;
-                                    $itemImage = $item['image'] ?? '/placeholder.svg?height=200&width=280';
-                                    
-                                    // Check if image file exists, otherwise use placeholder
-                                    if(!empty($itemImage) && $itemImage !== '/placeholder.svg?height=200&width=280' && !file_exists($itemImage)) {
-                                        $itemImage = '/placeholder.svg?height=200&width=280';
+                                    $itemImage = $item['image'] ?? '';
+
+                                    // Use placeholder if no image or if image is empty
+                                    if(empty($itemImage)) {
+                                        $itemImage = 'https://via.placeholder.com/280x200/ff6b6b/ffffff?text=' . urlencode($itemName);
                                     }
                                     
                                     echo '<div class="menu-item">';
                                     echo '<div class="menu-item-image">';
-                                    echo '<img src="' . htmlspecialchars($itemImage) . '" alt="' . htmlspecialchars($itemName) . '">';
+                                    echo '<img src="' . htmlspecialchars($itemImage) . '" alt="' . htmlspecialchars($itemName) . '" onerror="this.src=\'https://via.placeholder.com/280x200/ff6b6b/ffffff?text=' . urlencode($itemName) . '\'">';
                                     echo '</div>';
                                     echo '<div class="menu-item-content">';
                                     echo '<div class="menu-item-title">';

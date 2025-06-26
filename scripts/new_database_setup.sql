@@ -412,8 +412,16 @@ CREATE TABLE `staff` (
 --
 
 INSERT INTO `staff` (`STAFF_ID`, `STAFF_NUMBER`, `STAFF_NAME`, `STAFF_PNUMBER`, `STAFF_EMAIL`, `STAFF_PASSWORD`, `created_at`, `updated_at`) VALUES
-(1, 'S#1', 'Staff User', '0987654321', 'staff@cafedelights.com', 'password', '2025-06-25 07:53:34', '2025-06-25 07:53:34'),
-(2, 'S#2', 'John Staff', '0123456789', 'john.staff@cafedelights.com', 'password', '2025-06-25 07:53:34', '2025-06-25 07:53:34');
+(1, 'S#1', 'Sarah Yusra', '013-7771234', 'sarahYuss@gmail.com', 'Srah#1234', '2025-06-25 07:53:34', '2025-06-25 07:53:34'),
+(2, 'S#2', 'Raiqal Hilmi', '013-7946623', 'hilmiQal@gmail.com', 'Raiq@2025!hm', '2025-06-25 07:53:34', '2025-06-25 07:53:34'),
+(3, 'S#3', 'Yasmin Batrisya', '019-5010197', 'yasBatty77@gmail.com', 'YBtrsy#77mint', '2025-06-25 07:53:34', '2025-06-25 07:53:34'),
+(4, 'S#4', 'Fatien Najwa', '013-2831565', 'najwawa89@gmail.com', 'FatieN_94!na', '2025-06-25 07:53:34', '2025-06-25 07:53:34'),
+(5, 'S#5', 'Patricia Adriane', '017-8708340', 'adrianeGrand3@gmail.com', 'PatAdri@456!ne', '2025-06-25 07:53:34', '2025-06-25 07:53:34'),
+(6, 'S#6', 'Rosie Brown', '011-2157783', 'rorosieBb@gmail.com', 'RosieBr0wn$23', '2025-06-25 07:53:34', '2025-06-25 07:53:34'),
+(7, 'S#7', 'Farhan Qimie', '019-9698707', 'qimi3Farhan@gmail.com', 'FarQ!88hanQ', '2025-06-25 07:53:34', '2025-06-25 07:53:34'),
+(8, 'S#8', 'Asyraf Tan', '010-8852265', 'AsyrafTan09@gmail.com', 'AsTan#2024rf', '2025-06-25 07:53:34', '2025-06-25 07:53:34'),
+(9, 'S#9', 'Olivia Aileen', '013-3404500', 'oliviviLeen@gmail.com', 'OliAil_07$en', '2025-06-25 07:53:34', '2025-06-25 07:53:34');
+
 
 -- --------------------------------------------------------
 

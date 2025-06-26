@@ -161,7 +161,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         </div>
                         
                         <div class="form-group">
-                            <label for="email" class="form-label">Email Address / Username</label>
+                            <label for="email" class="form-label">Email Address</label>
                             <input type="text" id="email" name="email" class="form-control" value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>" required>
                             <div class="form-text">For admin login, you can use username or email</div>
                         </div>

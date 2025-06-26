@@ -31,7 +31,8 @@ $stats['today_orders'] = $result ? $result->fetch_assoc()['total'] : 0;
 
 // Recent orders
 $stmt = $conn->prepare("
-    SELECT o.*, c.CUST_NAME as customer_name, c.CUST_EMAIL as customer_email
+    SELECT o.ORDER_ID, o.ORDER_NUMBER, o.ORDER_DATE, o.ORDER_TIME, o.ORDER_TYPE, o.ORDER_STATUS, o.TOT_AMOUNT, 
+           c.CUST_NAME as customer_name, c.CUST_EMAIL as customer_email
     FROM `ORDER` o
     JOIN CUSTOMER c ON o.CUST_ID = c.CUST_ID
     ORDER BY o.ORDER_DATE DESC, o.ORDER_TIME DESC
@@ -146,9 +147,9 @@ $recentUsers = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                                         <?php else: ?>
                                             <?php foreach ($recentOrders as $order): ?>
                                                 <tr>
-                                                    <td>#<?php echo $order['id']; ?></td>
+                                                    <td>#<?php echo $order['ORDER_ID']; ?></td>
                                                     <td><?php echo htmlspecialchars($order['customer_name']); ?></td>
-                                                    <td><?php echo ucfirst($order['order_type']); ?></td>
+                                                    <td><?php echo ucfirst($order['ORDER_TYPE']); ?></td>
                                                     <td>
                                                         <span class="status-badge <?php echo $order['ORDER_STATUS']; ?>">
                                                             <?php echo ucfirst($order['ORDER_STATUS']); ?>

@@ -40,10 +40,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty($payment_method) || $payment_method !== 'fpx') {
         $payment_error = "Please select FPX Online Banking as payment method";
     } else {
-        // Simulate payment processing
-        // In a real application, you would integrate with a payment gateway here
-        
-        // Update order status using correct field names
         $stmt = $conn->prepare("UPDATE `ORDER` SET PAYMENT_STATUS = 'completed', PAYMENT_METHOD = ? WHERE ORDER_ID = ?");
         $stmt->bind_param("si", $payment_method, $order_id);
         
@@ -107,9 +103,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                     <label class="form-label">Payment Method</label>
                                     <div class="payment-methods">
                                         <input type="radio" name="payment_method" value="fpx" required checked>
-                                        <div class="payment-method-icon">
+                                        <span class="payment-method-icon">
                                             <i class="fas fa-university"></i>
-                                        </div>
+                                        </span>
                                         <span>FPX Online Banking</span>
                                     </div>
                                 </div>

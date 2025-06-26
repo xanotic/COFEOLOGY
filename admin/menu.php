@@ -23,9 +23,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $category = $_POST['category'];
                 $image = $_POST['image'] ?? '';
                 $stock_level = intval($_POST['stock_level']);
-                $admin_id = $_SESSION['admin_id'];
+                $admin_id = $_SESSION['user_id'];
                 
-                if (addMenuItem($conn, $name, $description, $price, $category, $image, $admin_id, $stock_level)) {
+                if (addMenuItem($conn, $name, $description, $price, $category, $stock_level, $admin_id, $image)) {
                     $message = "Menu item added successfully!";
                 } else {
                     $error = "Failed to add menu item.";
@@ -42,7 +42,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $image = $_POST['image'] ?? '';
                 $stock_level = intval($_POST['stock_level']);
                 
-                if (updateMenuItem($conn, $id, $name, $description, $price, $category, $active, $image, $stock_level)) {
+                if (updateMenuItem($conn, $id, $name, $description, $price, $category, $stock_level, $active, $image)) {
                     $message = "Menu item updated successfully!";
                 } else {
                     $error = "Failed to update menu item.";
@@ -51,7 +51,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 
             case 'delete':
                 $id = intval($_POST['id']);
-                $stmt = $conn->prepare("DELETE FROM " . MENU_ITEM . " WHERE " . ITEM_ID . " = ?");
+                $stmt = $conn->prepare("DELETE FROM menu_item WHERE ITEM_ID = ?");
                 $stmt->bind_param("i", $id);
                 if ($stmt->execute()) {
                     $message = "Menu item deleted successfully!";
@@ -64,12 +64,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 
 // Get all menu items
-$stmt = $conn->prepare("SELECT * FROM " . MENU_ITEM . " ORDER BY " . ITEM_CATEGORY . ", " . ITEM_NAME);
+$stmt = $conn->prepare("SELECT * FROM menu_item ORDER BY ITEM_CATEGORY, ITEM_NAME");
 $stmt->execute();
 $menuItems = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
 // Get categories
-$categories = array_unique(array_column($menuItems, ITEM_CATEGORY));
+$categories = array_unique(array_column($menuItems, 'ITEM_CATEGORY'));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -135,21 +135,21 @@ $categories = array_unique(array_column($menuItems, ITEM_CATEGORY));
                             </thead>
                             <tbody id="menu-table">
                                 <?php foreach ($menuItems as $item): ?>
-                                    <tr data-category="<?php echo htmlspecialchars($item[ITEM_CATEGORY]); ?>">
+                                    <tr data-category="<?php echo htmlspecialchars($item['ITEM_CATEGORY']); ?>">
                                         <td>
                                             <div class="menu-item-image-small">
-                                                <img src="<?php echo !empty($item['image']) ? htmlspecialchars($item['image']) : '/placeholder.svg?height=50&width=50'; ?>" alt="<?php echo htmlspecialchars($item[ITEM_NAME]); ?>">
+                                                <img src="<?php echo !empty($item['image']) ? htmlspecialchars($item['image']) : '/placeholder.svg?height=50&width=50'; ?>" alt="<?php echo htmlspecialchars($item['ITEM_NAME']); ?>">
                                             </div>
                                         </td>
                                         <td>
                                             <div class="menu-item-info">
-                                                <strong><?php echo htmlspecialchars($item[ITEM_NAME]); ?></strong>
-                                                <p><?php echo htmlspecialchars($item[ITEM_DESCRIPTION]); ?></p>
+                                                <strong><?php echo htmlspecialchars($item['ITEM_NAME']); ?></strong>
+                                                <p><?php echo htmlspecialchars($item['ITEM_DESCRIPTION']); ?></p>
                                             </div>
                                         </td>
-                                        <td><?php echo htmlspecialchars($item[ITEM_CATEGORY]); ?></td>
-                                        <td><?php echo formatCurrency($item[ITEM_PRICE]); ?></td>
-                                        <td><?php echo htmlspecialchars($item['stock_level']); ?></td>
+                                        <td><?php echo htmlspecialchars($item['ITEM_CATEGORY']); ?></td>
+                                        <td><?php echo formatCurrency($item['ITEM_PRICE']); ?></td>
+                                        <td><?php echo htmlspecialchars($item['STOCK_LEVEL']); ?></td>
                                         <td>
                                             <span class="status-badge <?php echo $item['active'] ? 'active' : 'inactive'; ?>">
                                                 <?php echo $item['active'] ? 'Active' : 'Inactive'; ?>
@@ -160,7 +160,7 @@ $categories = array_unique(array_column($menuItems, ITEM_CATEGORY));
                                                 <button class="btn-icon" onclick="editItem(<?php echo htmlspecialchars(json_encode($item)); ?>)" title="Edit">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
-                                                <button class="btn-icon" onclick="deleteItem(<?php echo $item[ITEM_ID]; ?>)" title="Delete">
+                                                <button class="btn-icon" onclick="deleteItem(<?php echo $item['ITEM_ID']; ?>)" title="Delete">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </div>
@@ -261,6 +261,13 @@ $categories = array_unique(array_column($menuItems, ITEM_CATEGORY));
             white-space: nowrap;
         }
         
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
         .status-badge.active {
             background-color: rgba(76, 175, 80, 0.2);
             color: #2e7d32;
@@ -296,6 +303,122 @@ $categories = array_unique(array_column($menuItems, ITEM_CATEGORY));
         
         .form-check-input {
             margin-right: 10px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 0;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .close-modal:hover {
+            color: #333;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 2px rgba(0,123,255,0.25);
+        }
+        
+        .form-actions {
+            text-align: right;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        
+        .btn-icon {
+            background: none;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+            color: #666;
+            margin: 0 2px;
+        }
+        
+        .btn-icon:hover {
+            color: #333;
+        }
+        
+        .table-actions {
+            display: flex;
+            gap: 5px;
         }
     </style>
     
@@ -351,7 +474,7 @@ $categories = array_unique(array_column($menuItems, ITEM_CATEGORY));
             document.getElementById('price').value = item.ITEM_PRICE;
             document.getElementById('category').value = item.ITEM_CATEGORY;
             document.getElementById('image').value = item.image || '';
-            document.getElementById('stock_level').value = item.stock_level;
+            document.getElementById('stock_level').value = item.STOCK_LEVEL;
             document.getElementById('active').checked = item.active == 1;
             document.getElementById('active-group').style.display = 'block';
             document.getElementById('item-modal').style.display = 'flex';

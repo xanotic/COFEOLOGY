@@ -35,8 +35,8 @@ try {
     
     // Add placeholder images for items without images
     foreach($popularItems as &$item) {
-        if(empty($item['image']) || !file_exists('../' . $item['image'])) {
-            $item['image'] = '/placeholder.svg?height=200&width=280';
+        if(empty($item['image'])) {
+            $item['image'] = 'https://via.placeholder.com/280x200/ff6b6b/ffffff?text=' . urlencode($item['name']);
         }
     }
     

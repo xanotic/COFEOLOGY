@@ -48,7 +48,7 @@ function getPopularItems($conn, $limit = 4) {
                 'price' => $row['price'] ?? 0.00,
                 'category' => $row['category'] ?? 'general',
                 'STOCK_LEVEL' => $row['STOCK_LEVEL'] ?? 0,
-                'image' => $row['image'] ?? '/placeholder.svg?height=200&width=280'
+                'image' => !empty($row['image']) ? $row['image'] : 'https://via.placeholder.com/280x200/ff6b6b/ffffff?text=' . urlencode($row['name'] ?? 'Item')
             ];
             $items[] = $item;
         }
@@ -91,7 +91,7 @@ function getMenuItems($conn, $category = null) {
                 'price' => $row['price'] ?? 0.00,
                 'category' => $row['category'] ?? 'general',
                 'STOCK_LEVEL' => $row['STOCK_LEVEL'] ?? 0,
-                'image' => $row['image'] ?? '/placeholder.svg?height=200&width=280'
+                'image' => !empty($row['image']) ? $row['image'] : 'https://via.placeholder.com/280x200/ff6b6b/ffffff?text=' . urlencode($row['name'] ?? 'Item')
             ];
             $items[] = $item;
         }
@@ -103,7 +103,10 @@ function getMenuItems($conn, $category = null) {
 
 // Helper function to generate next custom ID
 function getNextCustomId($conn, $table, $prefix, $id_column) {
-    $stmt = $conn->prepare("SELECT MAX(CAST(SUBSTRING($id_column, 3) AS UNSIGNED)) as max_num FROM $table WHERE $id_column LIKE ?");
+    // Handle special case for ORDER table (backticks needed)
+    $table_name = ($table === '`ORDER`') ? '`ORDER`' : $table;
+    
+    $stmt = $conn->prepare("SELECT MAX(CAST(SUBSTRING($id_column, " . (strlen($prefix) + 1) . ") AS UNSIGNED)) as max_num FROM $table_name WHERE $id_column LIKE ?");
     $pattern = $prefix . '%';
     
     if($stmt) {
@@ -218,7 +221,31 @@ function addOrderListing($conn, $order_id, $item_id, $quantity, $price, $special
         return false;
     }
     
+    // Get next available ORDER_LISTING_ID
     $order_listing_id = getNextCustomId($conn, 'ORDER_LISTING', 'OL#', 'ORDER_LISTING_ID');
+    
+    // Double-check for uniqueness and increment if needed
+    $check_stmt = $conn->prepare("SELECT COUNT(*) as count FROM ORDER_LISTING WHERE ORDER_LISTING_ID = ?");
+    if($check_stmt) {
+        $check_stmt->bind_param("s", $order_listing_id);
+        $check_stmt->execute();
+        $check_result = $check_stmt->get_result();
+        $check_row = $check_result->fetch_assoc();
+        
+        // If ID already exists, find the next available one
+        if($check_row['count'] > 0) {
+            $counter = 1;
+            do {
+                $order_listing_id = 'OL#' . (intval(substr($order_listing_id, 3)) + $counter);
+                $check_stmt->bind_param("s", $order_listing_id);
+                $check_stmt->execute();
+                $check_result = $check_stmt->get_result();
+                $check_row = $check_result->fetch_assoc();
+                $counter++;
+            } while($check_row['count'] > 0 && $counter < 100); // Safety limit
+        }
+        $check_stmt->close();
+    }
     
     $stmt = $conn->prepare("INSERT INTO ORDER_LISTING (ORDER_LISTING_ID, ORDER_ID, ITEM_ID, ORDER_QUANTITY, item_price, special_requests) VALUES (?, ?, ?, ?, ?, ?)");
     if($stmt) {
