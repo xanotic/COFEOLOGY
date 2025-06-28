@@ -2,7 +2,7 @@
     <div class="container">
         <div class="footer-content">
             <div class="footer-section">
-                <h3>Café Delights</h3>
+                <h3>Cofeology Cafe</h3>
                 <p>Enjoy delicious meals delivered to your doorstep or ready for pickup.</p>
                 <div class="social-links">
                     <a href="#"><i class="fab fa-facebook"></i></a>
@@ -21,9 +21,9 @@
             </div>
             <div class="footer-section">
                 <h3>Contact Us</h3>
-                <p><i class="fas fa-map-marker-alt"></i> 123 Food Street, City, Country</p>
-                <p><i class="fas fa-phone"></i> +123 456 7890</p>
-                <p><i class="fas fa-envelope"></i> info@cafedelights.com</p>
+                <p><i class="fas fa-map-marker-alt"></i> Cofeology Grand Boulevard, 21 - 23, Jalan Bukit Beruang, Central Business District,, Malacca City, Malaysia, 75450</p>
+                <p><i class="fas fa-phone"></i> +011-5277 7730</p>
+                <p><i class="fas fa-envelope"></i> info@cofeology.com</p>
             </div>
             <div class="footer-section">
                 <h3>Opening Hours</h3>
