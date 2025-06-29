@@ -163,9 +163,7 @@ $completedOrders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                                                 <td><?php echo formatCurrency($order['TOT_AMOUNT']); ?></td>
                                                 <td>
                                                     <div class="table-actions">
-                                                        <a href="order-details.php?id=<?php echo $order['ORDER_ID']; ?>" class="btn-icon" title="View Details">
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
+                                                        
                                                         <button class="btn-icon update-status" data-id="<?php echo $order['ORDER_ID']; ?>" title="Update Status">
                                                             <i class="fas fa-edit"></i>
                                                         </button>
@@ -194,7 +192,7 @@ $completedOrders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                                         <th>Type</th>
                                         <th>Date</th>
                                         <th>Total</th>
-                                        <th>Actions</th>
+                                        
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -211,11 +209,7 @@ $completedOrders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                                                 <td><?php echo date('d M Y, h:i A', strtotime($order['ORDER_DATE'] . ' ' . $order['ORDER_TIME'])); ?></td>
                                                 <td><?php echo formatCurrency($order['TOT_AMOUNT']); ?></td>
                                                 <td>
-                                                    <div class="table-actions">
-                                                        <a href="order-details.php?id=<?php echo $order['ORDER_ID']; ?>" class="btn-icon" title="View Details">
-                                                            <i class="fas fa-eye"></i>
-                                                        </a>
-                                                    </div>
+                                                    
                                                 </td>
                                             </tr>
                                         <?php endforeach; ?>
