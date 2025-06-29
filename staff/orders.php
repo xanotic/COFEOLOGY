@@ -9,39 +9,80 @@ if (!isStaff()) {
     exit();
 }
 
-// Get all orders (staff can see all orders)
-$stmt = $conn->prepare("
-    SELECT o.*, c.name as customer_name, c.email as customer_email, c.phone as customer_phone
-    FROM `ORDER` o
-    JOIN CUSTOMER c ON o.customer_id = c.customer_id
-    ORDER BY 
-        CASE 
-            WHEN o.order_status = 'pending' THEN 1
-            WHEN o.order_status = 'preparing' THEN 2
-            WHEN o.order_status = 'ready' THEN 3
-            WHEN o.order_status = 'out_for_delivery' THEN 4
-            ELSE 5
-        END,
-        o.order_date DESC
-");
+$message = '';
+$error = '';
+
+// Handle order status updates
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
+    if ($_POST['action'] === 'update_status') {
+        $order_id = intval($_POST['order_id']);
+        $new_status = $_POST['status'];
+        
+        $stmt = $conn->prepare("UPDATE `ORDER` SET ORDER_STATUS = ? WHERE ORDER_ID = ?");
+        $stmt->bind_param("si", $new_status, $order_id);
+        
+        if ($stmt->execute()) {
+            $message = "Order status updated successfully!";
+        } else {
+            $error = "Failed to update order status.";
+        }
+    }
+}
+
+// Get filter parameters
+$status_filter = isset($_GET['status']) ? $_GET['status'] : '';
+$type_filter = isset($_GET['type']) ? $_GET['type'] : '';
+$search = isset($_GET['search']) ? $_GET['search'] : '';
+
+// Build the query with filters
+$query = "SELECT o.*, c.CUST_NAME, c.CUST_EMAIL, c.CUST_NPHONE 
+          FROM `ORDER` o 
+          LEFT JOIN CUSTOMER c ON o.CUST_ID = c.CUST_ID 
+          WHERE 1=1";
+
+$params = [];
+$types = "";
+
+if ($status_filter) {
+    $query .= " AND o.ORDER_STATUS = ?";
+    $params[] = $status_filter;
+    $types .= "s";
+}
+
+if ($type_filter) {
+    $query .= " AND o.ORDER_TYPE = ?";
+    $params[] = $type_filter;
+    $types .= "s";
+}
+
+if ($search) {
+    $query .= " AND (c.CUST_NAME LIKE ? OR o.ORDER_ID LIKE ?)";
+    $params[] = "%$search%";
+    $params[] = "%$search%";
+    $types .= "ss";
+}
+
+$query .= " ORDER BY o.ORDER_DATE DESC, o.ORDER_TIME DESC";
+
+$stmt = $conn->prepare($query);
+if (!empty($params)) {
+    $stmt->bind_param($types, ...$params);
+}
 $stmt->execute();
 $orders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-// Get order statistics for today
-$today = date('Y-m-d');
-$stmt = $conn->prepare("
-    SELECT 
-        COUNT(*) as total_today,
-        COUNT(CASE WHEN order_status = 'pending' THEN 1 END) as pending_today,
-        COUNT(CASE WHEN order_status = 'preparing' THEN 1 END) as preparing_today,
-        COUNT(CASE WHEN order_status = 'ready' THEN 1 END) as ready_today,
-        COUNT(CASE WHEN order_status = 'completed' THEN 1 END) as completed_today
-    FROM `ORDER`
-    WHERE DATE(order_date) = ?
-");
-$stmt->bind_param("s", $today);
-$stmt->execute();
-$todayStats = $stmt->get_result()->fetch_assoc();
+// Get order statistics
+$stats_query = "SELECT 
+    COUNT(*) as total_orders,
+    SUM(CASE WHEN ORDER_STATUS = 'pending' THEN 1 ELSE 0 END) as pending_orders,
+    SUM(CASE WHEN ORDER_STATUS = 'preparing' THEN 1 ELSE 0 END) as preparing_orders,
+    SUM(CASE WHEN ORDER_STATUS = 'ready' THEN 1 ELSE 0 END) as ready_orders,
+    SUM(CASE WHEN ORDER_STATUS = 'completed' THEN 1 ELSE 0 END) as completed_orders,
+    SUM(CASE WHEN ORDER_DATE = CURDATE() THEN TOT_AMOUNT ELSE 0 END) as today_revenue
+    FROM `ORDER`";
+
+$stats_result = $conn->query($stats_query);
+$stats = $stats_result->fetch_assoc();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -61,26 +102,35 @@ $todayStats = $stmt->get_result()->fetch_assoc();
             <header class="dashboard-header">
                 <div class="header-title">
                     <h1>Orders Management</h1>
+                    <p>Manage and track customer orders</p>
                 </div>
                 <div class="header-actions">
                     <button class="btn btn-primary" onclick="refreshOrders()">
                         <i class="fas fa-sync-alt"></i> Refresh
                     </button>
-                    <button class="btn btn-secondary" onclick="printKitchenOrders()">
-                        <i class="fas fa-print"></i> Kitchen Orders
+                    <button class="btn btn-secondary" onclick="printOrders()">
+                        <i class="fas fa-print"></i> Print Orders
                     </button>
                 </div>
             </header>
             
-            <!-- Today's Statistics -->
+            <?php if ($message): ?>
+                <div class="alert alert-success"><?php echo $message; ?></div>
+            <?php endif; ?>
+            
+            <?php if ($error): ?>
+                <div class="alert alert-error"><?php echo $error; ?></div>
+            <?php endif; ?>
+            
+            <!-- Order Statistics -->
             <div class="dashboard-stats">
                 <div class="stat-card">
                     <div class="stat-icon">
-                        <i class="fas fa-shopping-bag"></i>
+                        <i class="fas fa-shopping-cart"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>Today's Orders</h3>
-                        <p><?php echo number_format($todayStats['total_today']); ?></p>
+                        <h3>Total Orders</h3>
+                        <p><?php echo number_format($stats['total_orders']); ?></p>
                     </div>
                 </div>
                 <div class="stat-card">
@@ -89,7 +139,7 @@ $todayStats = $stmt->get_result()->fetch_assoc();
                     </div>
                     <div class="stat-info">
                         <h3>Pending</h3>
-                        <p><?php echo number_format($todayStats['pending_today']); ?></p>
+                        <p><?php echo number_format($stats['pending_orders']); ?></p>
                     </div>
                 </div>
                 <div class="stat-card">
@@ -98,7 +148,7 @@ $todayStats = $stmt->get_result()->fetch_assoc();
                     </div>
                     <div class="stat-info">
                         <h3>Preparing</h3>
-                        <p><?php echo number_format($todayStats['preparing_today']); ?></p>
+                        <p><?php echo number_format($stats['preparing_orders']); ?></p>
                     </div>
                 </div>
                 <div class="stat-card">
@@ -107,434 +157,333 @@ $todayStats = $stmt->get_result()->fetch_assoc();
                     </div>
                     <div class="stat-info">
                         <h3>Ready</h3>
-                        <p><?php echo number_format($todayStats['ready_today']); ?></p>
+                        <p><?php echo number_format($stats['ready_orders']); ?></p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3>Today's Revenue</h3>
+                        <p>RM<?php echo number_format($stats['today_revenue'], 2); ?></p>
                     </div>
                 </div>
             </div>
             
             <div class="card">
                 <div class="card-header">
-                    <h2>All Orders</h2>
+                    <h2>Orders</h2>
                     <div class="card-filters">
-                        <select id="status-filter" class="form-control">
-                            <option value="">All Status</option>
-                            <option value="pending">Pending</option>
-                            <option value="preparing">Preparing</option>
-                            <option value="ready">Ready</option>
-                            <option value="out_for_delivery">Out for Delivery</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
-                        <select id="type-filter" class="form-control">
-                            <option value="">All Types</option>
-                            <option value="delivery">Delivery</option>
-                            <option value="takeaway">Takeaway</option>
-                            <option value="dine-in">Dine-in</option>
-                        </select>
-                        <input type="date" id="date-filter" class="form-control" value="<?php echo date('Y-m-d'); ?>">
+                        <form method="GET" class="filter-form">
+                            <select name="status" class="form-control">
+                                <option value="">All Status</option>
+                                <option value="pending" <?php echo $status_filter === 'pending' ? 'selected' : ''; ?>>Pending</option>
+                                <option value="preparing" <?php echo $status_filter === 'preparing' ? 'selected' : ''; ?>>Preparing</option>
+                                <option value="ready" <?php echo $status_filter === 'ready' ? 'selected' : ''; ?>>Ready</option>
+                                <option value="completed" <?php echo $status_filter === 'completed' ? 'selected' : ''; ?>>Completed</option>
+                                <option value="cancelled" <?php echo $status_filter === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                            </select>
+                            <select name="type" class="form-control">
+                                <option value="">All Types</option>
+                                <option value="dine-in" <?php echo $type_filter === 'dine-in' ? 'selected' : ''; ?>>Dine In</option>
+                                <option value="takeaway" <?php echo $type_filter === 'takeaway' ? 'selected' : ''; ?>>Takeaway</option>
+                                <option value="delivery" <?php echo $type_filter === 'delivery' ? 'selected' : ''; ?>>Delivery</option>
+                            </select>
+                            <input type="text" name="search" class="form-control" placeholder="Search orders..." value="<?php echo htmlspecialchars($search); ?>">
+                            <button type="submit" class="btn btn-primary">Filter</button>
+                            <a href="orders.php" class="btn btn-secondary">Clear</a>
+                        </form>
                     </div>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Order #</th>
-                                    <th>Customer</th>
-                                    <th>Contact</th>
-                                    <th>Type</th>
-                                    <th>Status</th>
-                                    <th>Total</th>
-                                    <th>Time</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="orders-table">
-                                <?php if (empty($orders)): ?>
-                                    <tr>
-                                        <td colspan="8" class="text-center">No orders found</td>
-                                    </tr>
-                                <?php else: ?>
-                                    <?php foreach ($orders as $order): ?>
-                                        <tr data-status="<?php echo $order['order_status']; ?>" 
-                                            data-type="<?php echo $order['order_type']; ?>" 
-                                            data-date="<?php echo date('Y-m-d', strtotime($order['order_date'])); ?>"
-                                            class="order-row <?php echo $order['order_status']; ?>">
-                                            <td>
-                                                <strong>#<?php echo $order['order_id']; ?></strong>
-                                                <?php if ($order['order_status'] === 'pending'): ?>
-                                                    <span class="urgent-badge">NEW</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td>
-                                                <div class="customer-info">
-                                                    <span><?php echo htmlspecialchars($order['customer_name']); ?></span>
-                                                    <small><?php echo htmlspecialchars($order['customer_email']); ?></small>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <a href="tel:<?php echo htmlspecialchars($order['customer_phone']); ?>" class="phone-link">
-                                                    <?php echo htmlspecialchars($order['customer_phone']); ?>
-                                                </a>
-                                            </td>
-                                            <td>
-                                                <span class="order-type-badge <?php echo $order['order_type']; ?>">
-                                                    <i class="fas <?php echo $order['order_type'] === 'delivery' ? 'fa-truck' : ($order['order_type'] === 'takeaway' ? 'fa-shopping-bag' : 'fa-utensils'); ?>"></i>
-                                                    <?php echo ucfirst($order['order_type']); ?>
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span class="status-badge <?php echo $order['order_status']; ?>">
-                                                    <?php echo ucfirst(str_replace('_', ' ', $order['order_status'])); ?>
-                                                </span>
-                                            </td>
-                                            <td><?php echo formatCurrency($order['total_amount']); ?></td>
-                                            <td>
-                                                <div class="time-info">
-                                                    <span><?php echo date('h:i A', strtotime($order['order_date'])); ?></span>
-                                                    <small><?php echo date('M d', strtotime($order['order_date'])); ?></small>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="table-actions">
-                                                    <a href="order-details.php?id=<?php echo $order['order_id']; ?>" class="btn-icon" title="View Details">
-                                                        <i class="fas fa-eye"></i>
-                                                    </a>
-                                                    <?php if ($order['order_status'] !== 'completed' && $order['order_status'] !== 'cancelled'): ?>
-                                                        <button class="btn-icon update-status" data-id="<?php echo $order['order_id']; ?>" data-current="<?php echo $order['order_status']; ?>" title="Update Status">
-                                                            <i class="fas fa-edit"></i>
-                                                        </button>
-                                                    <?php endif; ?>
-                                                    <button class="btn-icon print-order" data-id="<?php echo $order['order_id']; ?>" title="Print Order">
-                                                        <i class="fas fa-print"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
+                    <div class="orders-grid">
+                        <?php if (empty($orders)): ?>
+                            <div class="no-orders">
+                                <p>No orders found matching your criteria.</p>
+                            </div>
+                        <?php else: ?>
+                            <?php foreach ($orders as $order): ?>
+                                <div class="order-card" data-status="<?php echo $order['ORDER_STATUS']; ?>">
+                                    <div class="order-header">
+                                        <div class="order-id">
+                                            <strong>#<?php echo $order['ORDER_ID']; ?></strong>
+                                        </div>
+                                        <div class="order-status">
+                                            <span class="status-badge status-<?php echo $order['ORDER_STATUS']; ?>">
+                                                <?php echo ucfirst($order['ORDER_STATUS']); ?>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="order-customer">
+                                        <div class="customer-info">
+                                            <i class="fas fa-user"></i>
+                                            <span><?php echo htmlspecialchars($order['CUST_NAME'] ?? 'Guest'); ?></span>
+                                        </div>
+                                        <?php if ($order['CUST_NPHONE']): ?>
+                                        <div class="customer-phone">
+                                            <i class="fas fa-phone"></i>
+                                            <span><?php echo htmlspecialchars($order['CUST_NPHONE']); ?></span>
+                                        </div>
+                                        <?php endif; ?>
+                                    </div>
+                                    
+                                    <div class="order-details">
+                                        <div class="order-type">
+                                            <i class="fas fa-<?php echo $order['ORDER_TYPE'] === 'dine-in' ? 'utensils' : ($order['ORDER_TYPE'] === 'takeaway' ? 'shopping-bag' : 'truck'); ?>"></i>
+                                            <span><?php echo ucfirst(str_replace('-', ' ', $order['ORDER_TYPE'])); ?></span>
+                                        </div>
+                                        <div class="order-time">
+                                            <i class="fas fa-clock"></i>
+                                            <span><?php echo date('M j, Y g:i A', strtotime($order['ORDER_DATE'] . ' ' . $order['ORDER_TIME'])); ?></span>
+                                        </div>
+                                        <div class="order-total">
+                                            <i class="fas fa-dollar-sign"></i>
+                                            <span>RM<?php echo number_format($order['TOT_AMOUNT'], 2); ?></span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="order-actions">
+                                        <a href="order-details.php?id=<?php echo $order['ORDER_ID']; ?>" class="btn btn-sm btn-secondary">
+                                            <i class="fas fa-eye"></i> View Details
+                                        </a>
+                                        
+                                        <?php if ($order['ORDER_STATUS'] !== 'completed' && $order['ORDER_STATUS'] !== 'cancelled'): ?>
+                                        <div class="status-update">
+                                            <form method="post" class="status-form">
+                                                <input type="hidden" name="action" value="update_status">
+                                                <input type="hidden" name="order_id" value="<?php echo $order['ORDER_ID']; ?>">
+                                                <select name="status" class="form-control form-control-sm" onchange="this.form.submit()">
+                                                    <option value="pending" <?php echo $order['ORDER_STATUS'] === 'pending' ? 'selected' : ''; ?>>Pending</option>
+                                                    <option value="preparing" <?php echo $order['ORDER_STATUS'] === 'preparing' ? 'selected' : ''; ?>>Preparing</option>
+                                                    <option value="ready" <?php echo $order['ORDER_STATUS'] === 'ready' ? 'selected' : ''; ?>>Ready</option>
+                                                    <option value="completed" <?php echo $order['ORDER_STATUS'] === 'completed' ? 'selected' : ''; ?>>Completed</option>
+                                                    <option value="cancelled" <?php echo $order['ORDER_STATUS'] === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                                                </select>
+                                            </form>
+                                        </div>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Quick Status Update Modal -->
-    <div class="modal" id="status-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Update Order Status</h3>
-                <button class="close-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="status-form">
-                    <input type="hidden" id="order-id" name="order_id">
-                    
-                    <div class="status-buttons">
-                        <button type="button" class="status-btn pending" data-status="pending">
-                            <i class="fas fa-clock"></i>
-                            Pending
-                        </button>
-                        <button type="button" class="status-btn preparing" data-status="preparing">
-                            <i class="fas fa-fire"></i>
-                            Preparing
-                        </button>
-                        <button type="button" class="status-btn ready" data-status="ready">
-                            <i class="fas fa-check"></i>
-                            Ready
-                        </button>
-                        <button type="button" class="status-btn out_for_delivery" data-status="out_for_delivery">
-                            <i class="fas fa-truck"></i>
-                            Out for Delivery
-                        </button>
-                        <button type="button" class="status-btn completed" data-status="completed">
-                            <i class="fas fa-check-circle"></i>
-                            Completed
-                        </button>
-                        <button type="button" class="status-btn cancelled" data-status="cancelled">
-                            <i class="fas fa-times-circle"></i>
-                            Cancelled
-                        </button>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
     
     <style>
-        .urgent-badge {
-            background-color: #ff4757;
-            color: white;
-            padding: 2px 6px;
-            border-radius: 10px;
-            font-size: 0.7rem;
-            font-weight: bold;
-            margin-left: 5px;
-        }
-        
-        .order-type-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 3px 8px;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            font-weight: 500;
-        }
-        
-        .order-type-badge.delivery {
-            background-color: rgba(52, 152, 219, 0.2);
-            color: #2980b9;
-        }
-        
-        .order-type-badge.takeaway {
-            background-color: rgba(46, 204, 113, 0.2);
-            color: #27ae60;
-        }
-        
-        .order-type-badge.dine-in {
-            background-color: rgba(155, 89, 182, 0.2);
-            color: #8e44ad;
-        }
-        
-        .phone-link {
-            color: #3498db;
-            text-decoration: none;
-        }
-        
-        .phone-link:hover {
-            text-decoration: underline;
-        }
-        
-        .time-info {
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .time-info small {
-            color: #666;
-            font-size: 0.75rem;
-        }
-        
-        .order-row.pending {
-            background-color: rgba(255, 193, 7, 0.05);
-        }
-        
-        .order-row.preparing {
-            background-color: rgba(0, 123, 255, 0.05);
-        }
-        
-        .order-row.ready {
-            background-color: rgba(40, 167, 69, 0.05);
-        }
-        
-        .status-buttons {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-        
-        .status-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+        .alert {
             padding: 15px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .filter-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .filter-form .form-control {
+            min-width: 120px;
+        }
+        
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        
+        .order-card {
             background: white;
-            cursor: pointer;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
-            font-weight: 500;
+            border-left: 4px solid #ddd;
         }
         
-        .status-btn:hover {
+        .order-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
         }
         
-        .status-btn.pending { border-color: #ffc107; color: #856404; }
-        .status-btn.preparing { border-color: #007bff; color: #004085; }
-        .status-btn.ready { border-color: #28a745; color: #155724; }
-        .status-btn.out_for_delivery { border-color: #fd7e14; color: #8a4412; }
-        .status-btn.completed { border-color: #20c997; color: #0c5460; }
-        .status-btn.cancelled { border-color: #dc3545; color: #721c24; }
+        .order-card[data-status="pending"] {
+            border-left-color: #ffc107;
+        }
         
-        .status-btn.pending:hover { background-color: #ffc107; color: white; }
-        .status-btn.preparing:hover { background-color: #007bff; color: white; }
-        .status-btn.ready:hover { background-color: #28a745; color: white; }
-        .status-btn.out_for_delivery:hover { background-color: #fd7e14; color: white; }
-        .status-btn.completed:hover { background-color: #20c997; color: white; }
-        .status-btn.cancelled:hover { background-color: #dc3545; color: white; }
+        .order-card[data-status="preparing"] {
+            border-left-color: #fd7e14;
+        }
+        
+        .order-card[data-status="ready"] {
+            border-left-color: #20c997;
+        }
+        
+        .order-card[data-status="completed"] {
+            border-left-color: #28a745;
+        }
+        
+        .order-card[data-status="cancelled"] {
+            border-left-color: #dc3545;
+        }
+        
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .order-id {
+            font-size: 1.2rem;
+            color: #2d3436;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-pending {
+            background-color: rgba(255, 193, 7, 0.2);
+            color: #856404;
+        }
+        
+        .status-preparing {
+            background-color: rgba(253, 126, 20, 0.2);
+            color: #8a4a00;
+        }
+        
+        .status-ready {
+            background-color: rgba(32, 201, 151, 0.2);
+            color: #0f5132;
+        }
+        
+        .status-completed {
+            background-color: rgba(40, 167, 69, 0.2);
+            color: #155724;
+        }
+        
+        .status-cancelled {
+            background-color: rgba(220, 53, 69, 0.2);
+            color: #721c24;
+        }
+        
+        .order-customer {
+            margin-bottom: 15px;
+        }
+        
+        .customer-info, .customer-phone {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 5px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .order-details {
+            margin-bottom: 20px;
+        }
+        
+        .order-type, .order-time, .order-total {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .order-total {
+            font-weight: bold;
+            color: #28a745;
+        }
+        
+        .order-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .status-form {
+            flex: 1;
+        }
+        
+        .status-form select {
+            width: 100%;
+        }
+        
+        .no-orders {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.1rem;
+        }
+        
+        .header-title p {
+            margin: 5px 0 0 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
     </style>
     
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Filter functionality
-            const statusFilter = document.getElementById('status-filter');
-            const typeFilter = document.getElementById('type-filter');
-            const dateFilter = document.getElementById('date-filter');
-            const ordersTable = document.getElementById('orders-table');
-            
-            function filterOrders() {
-                const statusValue = statusFilter.value;
-                const typeValue = typeFilter.value;
-                const dateValue = dateFilter.value;
-                const rows = ordersTable.querySelectorAll('tr');
-                
-                rows.forEach(row => {
-                    const rowStatus = row.getAttribute('data-status');
-                    const rowType = row.getAttribute('data-type');
-                    const rowDate = row.getAttribute('data-date');
-                    
-                    let showRow = true;
-                    
-                    if (statusValue && rowStatus !== statusValue) {
-                        showRow = false;
-                    }
-                    
-                    if (typeValue && rowType !== typeValue) {
-                        showRow = false;
-                    }
-                    
-                    if (dateValue && rowDate !== dateValue) {
-                        showRow = false;
-                    }
-                    
-                    row.style.display = showRow ? '' : 'none';
-                });
-            }
-            
-            statusFilter.addEventListener('change', filterOrders);
-            typeFilter.addEventListener('change', filterOrders);
-            dateFilter.addEventListener('change', filterOrders);
-            
-            // Status update modal
-            const modal = document.getElementById('status-modal');
-            const closeModal = document.querySelector('.close-modal');
-            const updateButtons = document.querySelectorAll('.update-status');
-            const statusButtons = document.querySelectorAll('.status-btn');
-            
-            updateButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const orderId = this.getAttribute('data-id');
-                    const currentStatus = this.getAttribute('data-current');
-                    document.getElementById('order-id').value = orderId;
-                    
-                    // Highlight current status
-                    statusButtons.forEach(btn => {
-                        btn.classList.remove('active');
-                        if (btn.getAttribute('data-status') === currentStatus) {
-                            btn.style.backgroundColor = btn.style.borderColor;
-                            btn.style.color = 'white';
-                        }
-                    });
-                    
-                    modal.style.display = 'flex';
-                });
-            });
-            
-            statusButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const orderId = document.getElementById('order-id').value;
-                    const status = this.getAttribute('data-status');
-                    
-                    updateOrderStatus(orderId, status);
-                });
-            });
-            
-            closeModal.addEventListener('click', function() {
-                modal.style.display = 'none';
-            });
-            
-            window.addEventListener('click', function(event) {
-                if (event.target === modal) {
-                    modal.style.display = 'none';
-                }
-            });
-            
-            // Print order functionality
-            const printButtons = document.querySelectorAll('.print-order');
-            printButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const orderId = this.getAttribute('data-id');
-                    printOrder(orderId);
-                });
-            });
-        });
-        
-        function updateOrderStatus(orderId, status) {
-            fetch('../api/update-order-status.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    order_id: orderId,
-                    order_status: status
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById('status-modal').style.display = 'none';
-                    showNotification('Order status updated successfully');
-                    
-                    // Refresh page after a short delay
-                    setTimeout(() => {
-                        location.reload();
-                    }, 1000);
-                } else {
-                    showNotification(data.message || 'Failed to update order status', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showNotification('An error occurred. Please try again.', 'error');
-            });
-        }
-        
         function refreshOrders() {
             location.reload();
         }
         
-        function printOrder(orderId) {
-            window.open(`../api/print-order.php?id=${orderId}`, '_blank');
+        function printOrders() {
+            window.print();
         }
         
-        function printKitchenOrders() {
-            window.open('../api/print-kitchen-orders.php', '_blank');
-        }
-        
-        function showNotification(message, type = 'success') {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.textContent = message;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                notification.classList.add('show');
-            }, 10);
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-                setTimeout(() => {
-                    if (document.body.contains(notification)) {
-                        document.body.removeChild(notification);
-                    }
-                }, 300);
-            }, 3000);
-        }
-        
-        // Auto-refresh every 30 seconds for new orders
+        // Auto-refresh every 30 seconds for active orders
         setInterval(function() {
-            // You can implement AJAX refresh here to avoid full page reload
-            const currentTime = new Date().toLocaleTimeString();
-            console.log('Checking for new orders at', currentTime);
-        }, 30000);
+            const activeStatuses = ['pending', 'preparing', 'ready'];
+            const currentStatus = new URLSearchParams(window.location.search).get('status');
+            
+            if (!currentStatus || activeStatuses.includes(currentStatus)) {
+                // Only refresh if we're viewing active orders
+                const xhr = new XMLHttpRequest();
+                xhr.open('GET', window.location.href, true);
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        // Update the orders grid without full page reload
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(xhr.responseText, 'text/html');
+                        const newOrdersGrid = doc.querySelector('.orders-grid');
+                        const currentOrdersGrid = document.querySelector('.orders-grid');
+                        
+                        if (newOrdersGrid && currentOrdersGrid) {
+                            currentOrdersGrid.innerHTML = newOrdersGrid.innerHTML;
+                        }
+                    }
+                };
+                xhr.send();
+            }
+        }, 30000); // 30 seconds
     </script>
 </body>
 </html>

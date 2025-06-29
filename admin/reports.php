@@ -172,8 +172,6 @@ $orders_growth = $prev_data['orders'] > 0 ? (($total_orders - $prev_data['orders
                             </form>
                         </div>
                         <div class="action-buttons">
-                            <button class="btn-icon" onclick="exportReport()" title="Export Report">
-                                <i class="fas fa-download"></i>
                             </button>
                             <button class="btn-icon" onclick="printReport()" title="Print Report">
                                 <i class="fas fa-print"></i>

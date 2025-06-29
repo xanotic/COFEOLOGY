@@ -18,54 +18,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         switch ($_POST['action']) {
             case 'add_item':
                 $name = $_POST['name'];
-                $price = floatval($_POST['price']);
                 $description = $_POST['description'];
+                $price = floatval($_POST['price']);
                 $category = $_POST['category'];
-                $stock = intval($_POST['stock']);
-                $image = $_POST['image'];
-                $admin_id = $_SESSION['admin_id'];
+                $stock_level = intval($_POST['stock_level']);
+                $image = $_POST['image'] ?? null;
+                $admin_id = $_SESSION['user_id'];
                 
-                // Generate menu item ID
-                $menu_item_id = getNextCustomId($conn, 'menu_item', 'MI#', 'MENU_ITEM_ID');
-                
-                $stmt = $conn->prepare("INSERT INTO menu_item (MENU_ITEM_ID, ITEM_NAME, ITEM_PRICE, ITEM_DESCRIPTION, ITEM_CATEGORY, STOCK_LEVEL, ADMIN_ID, image) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-                if ($stmt) {
-                    $stmt->bind_param("ssdssiis", $menu_item_id, $name, $price, $description, $category, $stock, $admin_id, $image);
-                    if ($stmt->execute()) {
-                        $message = "Menu item added successfully!";
-                    } else {
-                        $error = "Failed to add menu item.";
-                    }
-                    $stmt->close();
+                if (addMenuItem($conn, $name, $description, $price, $category, $stock_level, $admin_id, $image)) {
+                    $message = "Menu item added successfully!";
+                } else {
+                    $error = "Failed to add menu item.";
                 }
                 break;
                 
             case 'update_item':
                 $item_id = intval($_POST['item_id']);
                 $name = $_POST['name'];
-                $price = floatval($_POST['price']);
                 $description = $_POST['description'];
+                $price = floatval($_POST['price']);
                 $category = $_POST['category'];
-                $stock = intval($_POST['stock']);
-                $image = $_POST['image'];
+                $stock_level = intval($_POST['stock_level']);
                 $active = isset($_POST['active']) ? 1 : 0;
+                $image = $_POST['image'] ?? null;
                 
-                $stmt = $conn->prepare("UPDATE menu_item SET ITEM_NAME = ?, ITEM_PRICE = ?, ITEM_DESCRIPTION = ?, ITEM_CATEGORY = ?, STOCK_LEVEL = ?, image = ?, active = ? WHERE ITEM_ID = ?");
-                if ($stmt) {
-                    $stmt->bind_param("sdssisii", $name, $price, $description, $category, $stock, $image, $active, $item_id);
-                    if ($stmt->execute()) {
-                        $message = "Menu item updated successfully!";
-                    } else {
-                        $error = "Failed to update menu item.";
-                    }
-                    $stmt->close();
+                if (updateMenuItem($conn, $item_id, $name, $description, $price, $category, $stock_level, $active, $image)) {
+                    $message = "Menu item updated successfully!";
+                } else {
+                    $error = "Failed to update menu item.";
                 }
                 break;
                 
             case 'delete_item':
                 $item_id = intval($_POST['item_id']);
-                
-                $stmt = $conn->prepare("UPDATE menu_item SET active = 0 WHERE ITEM_ID = ?");
+                $stmt = $conn->prepare("UPDATE MENU_ITEM SET active = 0 WHERE ITEM_ID = ?");
                 if ($stmt) {
                     $stmt->bind_param("i", $item_id);
                     if ($stmt->execute()) {
@@ -76,54 +62,40 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $stmt->close();
                 }
                 break;
-                
-            case 'update_stock':
-                $item_id = intval($_POST['item_id']);
-                $stock = intval($_POST['stock']);
-                
-                $stmt = $conn->prepare("UPDATE menu_item SET STOCK_LEVEL = ? WHERE ITEM_ID = ?");
-                if ($stmt) {
-                    $stmt->bind_param("ii", $stock, $item_id);
-                    if ($stmt->execute()) {
-                        $message = "Stock updated successfully!";
-                    } else {
-                        $error = "Failed to update stock.";
-                    }
-                    $stmt->close();
-                }
-                break;
         }
     }
 }
 
 // Get all menu items
-$menu_items = [];
-$result = $conn->query("SELECT mi.*, a.ADM_USERNAME as admin_name FROM menu_item mi LEFT JOIN admin a ON mi.ADMIN_ID = a.ADM_ID ORDER BY mi.ITEM_CATEGORY, mi.ITEM_NAME");
+$menuItems = [];
+$result = $conn->query("SELECT * FROM MENU_ITEM ORDER BY ITEM_CATEGORY, ITEM_NAME");
 if ($result) {
-    $menu_items = $result->fetch_all(MYSQLI_ASSOC);
+    while ($row = $result->fetch_assoc()) {
+        $menuItems[] = $row;
+    }
 }
 
-// Get categories
+// Get categories for filter
 $categories = [];
-$result = $conn->query("SELECT DISTINCT ITEM_CATEGORY FROM menu_item WHERE active = 1 ORDER BY ITEM_CATEGORY");
+$result = $conn->query("SELECT DISTINCT ITEM_CATEGORY FROM MENU_ITEM WHERE active = 1");
 if ($result) {
     while ($row = $result->fetch_assoc()) {
         $categories[] = $row['ITEM_CATEGORY'];
     }
 }
 
-// Get statistics
+// Get menu statistics
 $stats = [];
-$result = $conn->query("SELECT COUNT(*) as total FROM menu_item WHERE active = 1");
+$result = $conn->query("SELECT COUNT(*) as total FROM MENU_ITEM WHERE active = 1");
 $stats['total_items'] = $result ? $result->fetch_assoc()['total'] : 0;
 
-$result = $conn->query("SELECT COUNT(*) as total FROM menu_item WHERE STOCK_LEVEL <= 10 AND active = 1");
-$stats['low_stock'] = $result ? $result->fetch_assoc()['total'] : 0;
+$result = $conn->query("SELECT COUNT(*) as total FROM MENU_ITEM WHERE active = 1 AND STOCK_LEVEL > 0");
+$stats['in_stock'] = $result ? $result->fetch_assoc()['total'] : 0;
 
-$result = $conn->query("SELECT COUNT(*) as total FROM menu_item WHERE active = 0");
-$stats['inactive_items'] = $result ? $result->fetch_assoc()['total'] : 0;
+$result = $conn->query("SELECT COUNT(*) as total FROM MENU_ITEM WHERE active = 1 AND STOCK_LEVEL = 0");
+$stats['out_of_stock'] = $result ? $result->fetch_assoc()['total'] : 0;
 
-$result = $conn->query("SELECT COUNT(DISTINCT ITEM_CATEGORY) as total FROM menu_item WHERE active = 1");
+$result = $conn->query("SELECT COUNT(DISTINCT ITEM_CATEGORY) as total FROM MENU_ITEM WHERE active = 1");
 $stats['categories'] = $result ? $result->fetch_assoc()['total'] : 0;
 ?>
 <!DOCTYPE html>
@@ -146,11 +118,8 @@ $stats['categories'] = $result ? $result->fetch_assoc()['total'] : 0;
                     <h1>Menu Management</h1>
                 </div>
                 <div class="header-actions">
-                    <button class="btn btn-primary" onclick="openAddItemModal()">
-                        <i class="fas fa-plus"></i> Add Item
-                    </button>
-                    <button class="btn btn-secondary" onclick="exportMenu()">
-                        <i class="fas fa-download"></i> Export
+                    <button class="btn btn-primary" onclick="openAddModal()">
+                        <i class="fas fa-plus"></i> Add Menu Item
                     </button>
                 </div>
             </header>
@@ -175,20 +144,20 @@ $stats['categories'] = $result ? $result->fetch_assoc()['total'] : 0;
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon">
-                        <i class="fas fa-exclamation-triangle"></i>
+                        <i class="fas fa-check-circle"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>Low Stock</h3>
-                        <p><?php echo number_format($stats['low_stock']); ?></p>
+                        <h3>In Stock</h3>
+                        <p><?php echo number_format($stats['in_stock']); ?></p>
                     </div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon">
-                        <i class="fas fa-eye-slash"></i>
+                        <i class="fas fa-exclamation-triangle"></i>
                     </div>
                     <div class="stat-info">
-                        <h3>Inactive Items</h3>
-                        <p><?php echo number_format($stats['inactive_items']); ?></p>
+                        <h3>Out of Stock</h3>
+                        <p><?php echo number_format($stats['out_of_stock']); ?></p>
                     </div>
                 </div>
                 <div class="stat-card">
@@ -209,15 +178,16 @@ $stats['categories'] = $result ? $result->fetch_assoc()['total'] : 0;
                         <select id="category-filter" class="form-control">
                             <option value="">All Categories</option>
                             <?php foreach ($categories as $category): ?>
-                                <option value="<?php echo $category; ?>"><?php echo $category; ?></option>
+                                <option value="<?php echo $category; ?>"><?php echo ucfirst($category); ?></option>
                             <?php endforeach; ?>
                         </select>
                         <select id="status-filter" class="form-control">
                             <option value="">All Status</option>
-                            <option value="1">Active</option>
-                            <option value="0">Inactive</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="in-stock">In Stock</option>
+                            <option value="out-of-stock">Out of Stock</option>
                         </select>
-                        <input type="text" id="search-filter" class="form-control" placeholder="Search items...">
                     </div>
                 </div>
                 <div class="card-body">
@@ -235,25 +205,24 @@ $stats['categories'] = $result ? $result->fetch_assoc()['total'] : 0;
                                 </tr>
                             </thead>
                             <tbody id="menu-table">
-                                <?php foreach ($menu_items as $item): ?>
+                                <?php foreach ($menuItems as $item): ?>
                                     <tr data-category="<?php echo $item['ITEM_CATEGORY']; ?>" 
-                                        data-status="<?php echo $item['active']; ?>"
-                                        data-search="<?php echo strtolower($item['ITEM_NAME'] . ' ' . $item['ITEM_DESCRIPTION']); ?>">
+                                        data-status="<?php echo $item['active'] ? 'active' : 'inactive'; ?>"
+                                        data-stock="<?php echo $item['STOCK_LEVEL'] > 0 ? 'in-stock' : 'out-of-stock'; ?>">
                                         <td>
-                                            <img src="<?php echo $item['image'] ?: '/placeholder.svg?height=50&width=50'; ?>" 
+                                            <img src="<?php echo $item['image'] ?: 'https://via.placeholder.com/50x50/ff6b6b/ffffff?text=Item'; ?>" 
                                                  alt="<?php echo htmlspecialchars($item['ITEM_NAME']); ?>" 
                                                  class="item-image">
                                         </td>
                                         <td>
-                                            <div class="item-info">
-                                                <strong><?php echo htmlspecialchars($item['ITEM_NAME']); ?></strong>
-                                                <small><?php echo htmlspecialchars(substr($item['ITEM_DESCRIPTION'], 0, 50)) . '...'; ?></small>
-                                            </div>
+                                            <strong><?php echo htmlspecialchars($item['ITEM_NAME']); ?></strong>
+                                            <br>
+                                            <small class="text-muted"><?php echo htmlspecialchars(substr($item['ITEM_DESCRIPTION'], 0, 50)); ?>...</small>
                                         </td>
-                                        <td><?php echo htmlspecialchars($item['ITEM_CATEGORY']); ?></td>
-                                        <td>RM <?php echo number_format($item['ITEM_PRICE'], 2); ?></td>
+                                        <td><?php echo ucfirst($item['ITEM_CATEGORY']); ?></td>
+                                        <td><?php echo formatCurrency($item['ITEM_PRICE']); ?></td>
                                         <td>
-                                            <span class="stock-level <?php echo $item['STOCK_LEVEL'] <= 10 ? 'low' : ''; ?>">
+                                            <span class="stock-badge <?php echo $item['STOCK_LEVEL'] > 0 ? 'in-stock' : 'out-of-stock'; ?>">
                                                 <?php echo $item['STOCK_LEVEL']; ?>
                                             </span>
                                         </td>
@@ -266,9 +235,6 @@ $stats['categories'] = $result ? $result->fetch_assoc()['total'] : 0;
                                             <div class="table-actions">
                                                 <button class="btn-icon" onclick="editItem(<?php echo htmlspecialchars(json_encode($item)); ?>)" title="Edit">
                                                     <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="btn-icon" onclick="updateStock(<?php echo $item['ITEM_ID']; ?>, <?php echo $item['STOCK_LEVEL']; ?>)" title="Update Stock">
-                                                    <i class="fas fa-boxes"></i>
                                                 </button>
                                                 <button class="btn-icon btn-danger" onclick="deleteItem(<?php echo $item['ITEM_ID']; ?>, '<?php echo htmlspecialchars($item['ITEM_NAME']); ?>')" title="Delete">
                                                     <i class="fas fa-trash"></i>
@@ -294,89 +260,59 @@ $stats['categories'] = $result ? $result->fetch_assoc()['total'] : 0;
             </div>
             <div class="modal-body">
                 <form id="item-form" method="post">
-                    <input type="hidden" id="item-action" name="action" value="add_item">
-                    <input type="hidden" id="item-id" name="item_id">
+                    <input type="hidden" name="action" id="form-action" value="add_item">
+                    <input type="hidden" name="item_id" id="item-id">
                     
                     <div class="form-group">
-                        <label for="item-name" class="form-label">Item Name</label>
-                        <input type="text" id="item-name" name="name" class="form-control" required>
+                        <label for="name" class="form-label">Item Name</label>
+                        <input type="text" id="name" name="name" class="form-control" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="item-category" class="form-label">Category</label>
-                        <select id="item-category" name="category" class="form-control" required>
+                        <label for="description" class="form-label">Description</label>
+                        <textarea id="description" name="description" class="form-control" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="price" class="form-label">Price (RM)</label>
+                            <input type="number" id="price" name="price" class="form-control" step="0.01" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="stock_level" class="form-label">Stock Level</label>
+                            <input type="number" id="stock_level" name="stock_level" class="form-control" min="0" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="category" class="form-label">Category</label>
+                        <select id="category" name="category" class="form-control" required>
                             <option value="">Select Category</option>
-                            <option value="Coffee">Coffee</option>
-                            <option value="Beverages">Beverages</option>
-                            <option value="Local Courses">Local Courses</option>
-                            <option value="Italian Cuisines">Italian Cuisines</option>
-                            <option value="Western Favorites">Western Favorites</option>
-                            <option value="Mexican Cuisines">Mexican Cuisines</option>
-                            <option value="International Cuisines">International Cuisines</option>
-                            <option value="Salads">Salads</option>
-                            <option value="Side Dishes">Side Dishes</option>
-                            <option value="Appetizers">Appetizers</option>
-                            <option value="Desserts">Desserts</option>
-                            <option value="Pastries">Pastries</option>
+                            <option value="coffee">Coffee</option>
+                            <option value="tea">Tea</option>
+                            <option value="pastry">Pastry</option>
+                            <option value="sandwich">Sandwich</option>
+                            <option value="dessert">Dessert</option>
+                            <option value="beverage">Beverage</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
-                        <label for="item-price" class="form-label">Price (RM)</label>
-                        <input type="number" id="item-price" name="price" class="form-control" step="0.01" min="0" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="item-stock" class="form-label">Stock Level</label>
-                        <input type="number" id="item-stock" name="stock" class="form-control" min="0" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="item-description" class="form-label">Description</label>
-                        <textarea id="item-description" name="description" class="form-control" rows="3"></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="item-image" class="form-label">Image URL</label>
-                        <input type="url" id="item-image" name="image" class="form-control">
+                        <label for="image" class="form-label">Image URL</label>
+                        <input type="url" id="image" name="image" class="form-control" placeholder="https://example.com/image.jpg">
                     </div>
                     
                     <div class="form-group" id="active-group" style="display: none;">
-                        <label class="form-label">
-                            <input type="checkbox" id="item-active" name="active" value="1">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="active" name="active" checked>
+                            <span class="checkmark"></span>
                             Active
                         </label>
                     </div>
                     
                     <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeModal('item-modal')">Cancel</button>
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
                         <button type="submit" class="btn btn-primary" id="submit-btn">Add Item</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Stock Update Modal -->
-    <div class="modal" id="stock-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Update Stock Level</h3>
-                <button class="close-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="stock-form" method="post">
-                    <input type="hidden" name="action" value="update_stock">
-                    <input type="hidden" id="stock-item-id" name="item_id">
-                    
-                    <div class="form-group">
-                        <label for="stock-level" class="form-label">Stock Level</label>
-                        <input type="number" id="stock-level" name="stock" class="form-control" min="0" required>
-                    </div>
-                    
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" onclick="closeModal('stock-modal')">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Update Stock</button>
                     </div>
                 </form>
             </div>
@@ -409,25 +345,19 @@ $stats['categories'] = $result ? $result->fetch_assoc()['total'] : 0;
             border-radius: 4px;
         }
         
-        .item-info strong {
-            display: block;
-        }
-        
-        .item-info small {
-            color: #666;
-            display: block;
-        }
-        
-        .stock-level {
+        .stock-badge {
             padding: 4px 8px;
             border-radius: 12px;
             font-size: 12px;
             font-weight: 500;
+        }
+        
+        .stock-badge.in-stock {
             background-color: #d4edda;
             color: #155724;
         }
         
-        .stock-level.low {
+        .stock-badge.out-of-stock {
             background-color: #f8d7da;
             color: #721c24;
         }
@@ -449,16 +379,6 @@ $stats['categories'] = $result ? $result->fetch_assoc()['total'] : 0;
             color: #721c24;
         }
         
-        .card-filters {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .card-filters .form-control {
-            width: auto;
-            min-width: 150px;
-        }
-        
         .modal {
             display: none;
             position: fixed;
@@ -476,7 +396,7 @@ $stats['categories'] = $result ? $result->fetch_assoc()['total'] : 0;
             background-color: white;
             border-radius: 8px;
             width: 90%;
-            max-width: 600px;
+            max-width: 500px;
             max-height: 90vh;
             overflow-y: auto;
         }
@@ -504,6 +424,35 @@ $stats['categories'] = $result ? $result->fetch_assoc()['total'] : 0;
         .close-modal:hover {
             color: #333;
         }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        
+        .card-filters {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .card-filters .form-control {
+            width: auto;
+            min-width: 150px;
+        }
     </style>
     
     <script>
@@ -511,19 +460,17 @@ $stats['categories'] = $result ? $result->fetch_assoc()['total'] : 0;
             // Filter functionality
             const categoryFilter = document.getElementById('category-filter');
             const statusFilter = document.getElementById('status-filter');
-            const searchFilter = document.getElementById('search-filter');
             const menuTable = document.getElementById('menu-table');
             
             function filterItems() {
                 const categoryValue = categoryFilter.value;
                 const statusValue = statusFilter.value;
-                const searchValue = searchFilter.value.toLowerCase();
                 const rows = menuTable.querySelectorAll('tr');
                 
                 rows.forEach(row => {
                     const rowCategory = row.getAttribute('data-category');
                     const rowStatus = row.getAttribute('data-status');
-                    const rowSearch = row.getAttribute('data-search');
+                    const rowStock = row.getAttribute('data-stock');
                     
                     let showRow = true;
                     
@@ -531,12 +478,16 @@ $stats['categories'] = $result ? $result->fetch_assoc()['total'] : 0;
                         showRow = false;
                     }
                     
-                    if (statusValue && rowStatus !== statusValue) {
-                        showRow = false;
-                    }
-                    
-                    if (searchValue && !rowSearch.includes(searchValue)) {
-                        showRow = false;
+                    if (statusValue) {
+                        if (statusValue === 'active' && rowStatus !== 'active') {
+                            showRow = false;
+                        } else if (statusValue === 'inactive' && rowStatus !== 'inactive') {
+                            showRow = false;
+                        } else if (statusValue === 'in-stock' && rowStock !== 'in-stock') {
+                            showRow = false;
+                        } else if (statusValue === 'out-of-stock' && rowStock !== 'out-of-stock') {
+                            showRow = false;
+                        }
                     }
                     
                     row.style.display = showRow ? '' : 'none';
@@ -545,58 +496,47 @@ $stats['categories'] = $result ? $result->fetch_assoc()['total'] : 0;
             
             categoryFilter.addEventListener('change', filterItems);
             statusFilter.addEventListener('change', filterItems);
-            searchFilter.addEventListener('input', filterItems);
             
             // Modal functionality
-            const modals = document.querySelectorAll('.modal');
-            const closeButtons = document.querySelectorAll('.close-modal');
+            const modal = document.getElementById('item-modal');
+            const closeModal = document.querySelector('.close-modal');
             
-            closeButtons.forEach(button => {
-                button.addEventListener('click', function() {
-                    const modal = this.closest('.modal');
-                    modal.style.display = 'none';
-                });
+            closeModal.addEventListener('click', function() {
+                modal.style.display = 'none';
             });
             
             window.addEventListener('click', function(event) {
-                modals.forEach(modal => {
-                    if (event.target === modal) {
-                        modal.style.display = 'none';
-                    }
-                });
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
             });
         });
         
-        function openAddItemModal() {
-            document.getElementById('item-form').reset();
-            document.getElementById('item-action').value = 'add_item';
+        function openAddModal() {
             document.getElementById('modal-title').textContent = 'Add Menu Item';
+            document.getElementById('form-action').value = 'add_item';
             document.getElementById('submit-btn').textContent = 'Add Item';
             document.getElementById('active-group').style.display = 'none';
+            document.getElementById('item-form').reset();
             document.getElementById('item-modal').style.display = 'flex';
         }
         
         function editItem(item) {
-            document.getElementById('item-action').value = 'update_item';
-            document.getElementById('item-id').value = item.ITEM_ID;
-            document.getElementById('item-name').value = item.ITEM_NAME;
-            document.getElementById('item-category').value = item.ITEM_CATEGORY;
-            document.getElementById('item-price').value = item.ITEM_PRICE;
-            document.getElementById('item-stock').value = item.STOCK_LEVEL;
-            document.getElementById('item-description').value = item.ITEM_DESCRIPTION;
-            document.getElementById('item-image').value = item.image || '';
-            document.getElementById('item-active').checked = item.active == 1;
-            
             document.getElementById('modal-title').textContent = 'Edit Menu Item';
+            document.getElementById('form-action').value = 'update_item';
             document.getElementById('submit-btn').textContent = 'Update Item';
             document.getElementById('active-group').style.display = 'block';
+            
+            document.getElementById('item-id').value = item.ITEM_ID;
+            document.getElementById('name').value = item.ITEM_NAME;
+            document.getElementById('description').value = item.ITEM_DESCRIPTION;
+            document.getElementById('price').value = item.ITEM_PRICE;
+            document.getElementById('category').value = item.ITEM_CATEGORY;
+            document.getElementById('stock_level').value = item.STOCK_LEVEL;
+            document.getElementById('image').value = item.image || '';
+            document.getElementById('active').checked = item.active == 1;
+            
             document.getElementById('item-modal').style.display = 'flex';
-        }
-        
-        function updateStock(itemId, currentStock) {
-            document.getElementById('stock-item-id').value = itemId;
-            document.getElementById('stock-level').value = currentStock;
-            document.getElementById('stock-modal').style.display = 'flex';
         }
         
         function deleteItem(itemId, itemName) {
@@ -612,12 +552,8 @@ $stats['categories'] = $result ? $result->fetch_assoc()['total'] : 0;
             }
         }
         
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-        
-        function exportMenu() {
-            window.open('../api/export-menu.php', '_blank');
+        function closeModal() {
+            document.getElementById('item-modal').style.display = 'none';
         }
     </script>
 </body>

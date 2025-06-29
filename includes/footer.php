@@ -11,15 +11,6 @@
                 </div>
             </div>
             <div class="footer-section">
-                <h3>Quick Links</h3>
-                <ul>
-                    <li><a href="index.php">Home</a></li>
-                    <li><a href="menu.php">Menu</a></li>
-                    <li><a href="about.php">About Us</a></li>
-                    <li><a href="contact.php">Contact</a></li>
-                </ul>
-            </div>
-            <div class="footer-section">
                 <h3>Contact Us</h3>
                 <p><i class="fas fa-map-marker-alt"></i> Cofeology Grand Boulevard, 21 - 23, Jalan Bukit Beruang, Central Business District,, Malacca City, Malaysia, 75450</p>
                 <p><i class="fas fa-phone"></i> +011-5277 7730</p>
