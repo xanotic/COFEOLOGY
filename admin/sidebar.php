@@ -35,12 +35,6 @@
                     <span>Reports</span>
                 </a>
             </li>
-            <li>
-                <a href="settings.php" class="<?php echo basename($_SERVER['PHP_SELF']) === 'settings.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
-                </a>
-            </li>
             <li class="nav-divider"></li>
             <li>
                 <a href="../staff/dashboard.php">

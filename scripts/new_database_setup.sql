@@ -82,7 +82,7 @@ INSERT INTO `admin` (`ADM_ID`, `ADMIN_ID`, `ADM_USERNAME`, `ADM_PASSWORD`, `ADM_
 (1, 'A#1', 'admin_sara', 'SaraAdmin@123', 'admin.sara@email.com', '2025-06-25 07:53:34', '2025-06-25 07:53:34'),
 (2, 'A#2', 'sofeaJane_admin', 'sof3aJ4ne32#', 'admin.sofeaJanee@gmail.com', '2025-06-25 07:53:34', '2025-06-25 07:53:34'),
 (3, 'A#3', 'irfanIzzany_admin', 'irfanzz4nY16_19', 'admin.irfanIzzaneyy16@gmail.com', '2025-06-25 07:53:34', '2025-06-25 07:53:34'),
-(4, 'A#4', 'admin', 'password', 'admin@cafedelights.com', '2025-06-25 07:53:34', '2025-06-25 07:53:34');
+(4, 'A#4', 'admin', 'password', 'admin@cofeology.com', '2025-06-25 07:53:34', '2025-06-25 07:53:34');
 
 -- --------------------------------------------------------
 
