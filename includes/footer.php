@@ -4,11 +4,6 @@
             <div class="footer-section">
                 <h3>Cofeology Cafe</h3>
                 <p>Enjoy delicious meals delivered to your doorstep or ready for pickup.</p>
-                <div class="social-links">
-                    <a href="#"><i class="fab fa-facebook"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                    <a href="#"><i class="fab fa-twitter"></i></a>
-                </div>
             </div>
             <div class="footer-section">
                 <h3>Contact Us</h3>

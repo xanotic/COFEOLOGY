@@ -291,9 +291,7 @@ if ($result) {
                                             </td>
                                             <td>
                                                 <div class="table-actions">
-                                                    <button class="btn-icon" onclick="viewOrder(<?php echo $order['ORDER_ID']; ?>)" title="View Details">
-                                                        <i class="fas fa-eye"></i>
-                                                    </button>
+                                                    
                                                     <button class="btn-icon" onclick="updateStatus(<?php echo $order['ORDER_ID']; ?>, '<?php echo $order['ORDER_STATUS']; ?>')" title="Update Status">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
@@ -535,10 +533,7 @@ if ($result) {
             });
         });
         
-        function viewOrder(orderId) {
-            // Redirect to order details page
-            window.location.href = 'order-details.php?id=' + orderId;
-        }
+        
         
         function updateStatus(orderId, currentStatus) {
             document.getElementById('status-order-id').value = orderId;

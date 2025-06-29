@@ -112,7 +112,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout - Cofeology</title>
+    <title>Checkout - Café Delights</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/checkout.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -212,13 +212,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <span>Subtotal</span>
                                 <span id="checkout-subtotal">RM 0.00</span>
                             </div>
-                            <div class="summary-row" id="delivery-fee-row">
+                            <div class="summary-row" id="delivery-fee-row" style="display: none;">
                                 <span>Delivery Fee</span>
                                 <span>RM 5.00</span>
                             </div>
                             <div class="summary-row" id="membership-discount-row" style="display: none;">
-                                <span>Membership Discount</span>
-                                <span id="discount-amount">-RM 0.00</span>
+                                <span>Membership Discount (<span id="discount-percentage">0%</span>)</span>
+                                <span id="discount-amount" style="color: #28a745;">-RM 0.00</span>
                             </div>
                             <div class="summary-row summary-total">
                                 <span>Total</span>
@@ -235,6 +235,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     <script src="js/main.js"></script>
     <script>
+        // Global variables to store discount info
+        let membershipDiscountRate = 0;
+        let membershipDiscountPercentage = '0%';
+        let originalSubtotal = 0;
+        
         document.addEventListener('DOMContentLoaded', function() {
             loadCheckoutItems();
             
@@ -243,7 +248,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             const deliveryAddressSection = document.getElementById('delivery-address-section');
             const pickupTimeSection = document.getElementById('pickup-time-section');
             const deliveryFeeRow = document.getElementById('delivery-fee-row');
-            const membershipDiscountRow = document.getElementById('membership-discount-row');
             
             orderTypeInputs.forEach(input => {
                 input.addEventListener('change', function() {
@@ -251,13 +255,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         deliveryAddressSection.style.display = 'block';
                         pickupTimeSection.style.display = 'none';
                         deliveryFeeRow.style.display = 'flex';
-                        membershipDiscountRow.style.display = 'none';
                         updateTotal(true);
                     } else {
                         deliveryAddressSection.style.display = 'none';
                         pickupTimeSection.style.display = 'block';
                         deliveryFeeRow.style.display = 'none';
-                        membershipDiscountRow.style.display = 'none';
                         updateTotal(false);
                     }
                 });
@@ -328,46 +330,58 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             
             checkoutItems.innerHTML = html;
             
-            // Update totals
+            // Store original subtotal
+            originalSubtotal = subtotal;
+            
+            // Update subtotal display
             document.getElementById('checkout-subtotal').textContent = formatCurrency(subtotal);
             
-            // Apply membership discount
+            // Calculate membership discount
             const membershipType = '<?php echo $customer['MEMBERSHIP']; ?>';
-            let discountRate = 0;
+            
             if (membershipType === 'premium') {
-                discountRate = 0.10; // 10% discount
+                membershipDiscountRate = 0.10; // 10% discount
+                membershipDiscountPercentage = '10%';
             } else if (membershipType === 'vip') {
-                discountRate = 0.20; // 20% discount
+                membershipDiscountRate = 0.20; // 20% discount
+                membershipDiscountPercentage = '20%';
+            } else {
+                membershipDiscountRate = 0;
+                membershipDiscountPercentage = '0%';
             }
             
-            if (discountRate > 0) {
-                const discountAmount = subtotal * discountRate;
+            // Show membership discount if applicable
+            if (membershipDiscountRate > 0) {
+                const discountAmount = originalSubtotal * membershipDiscountRate;
                 document.getElementById('membership-discount-row').style.display = 'flex';
+                document.getElementById('discount-percentage').textContent = membershipDiscountPercentage;
                 document.getElementById('discount-amount').textContent = '-' + formatCurrency(discountAmount);
-                subtotal -= discountAmount;
             }
             
-            updateTotal(true); // Default to delivery
+            // Initial total calculation (no delivery fee by default)
+            updateTotal(false);
             
             // Set hidden inputs
             document.getElementById('cart_items').value = JSON.stringify(cart);
         }
         
         function updateTotal(includeDeliveryFee) {
-            const subtotalText = document.getElementById('checkout-subtotal').textContent.replace('RM ', '');
-            const discountText = document.getElementById('discount-amount').textContent.replace('-RM ', '');
+            let subtotal = originalSubtotal;
             
-            let subtotal = parseFloat(subtotalText);
-            const discount = parseFloat(discountText) || 0;
+            // Apply membership discount
+            let discountAmount = 0;
+            if (membershipDiscountRate > 0) {
+                discountAmount = subtotal * membershipDiscountRate;
+                subtotal -= discountAmount;
+            }
             
-            // Apply discount to subtotal
-            subtotal -= discount;
-            
+            // Add delivery fee if applicable
             const deliveryFee = includeDeliveryFee ? 5 : 0;
             const total = subtotal + deliveryFee;
             
+            // Update total display
             document.getElementById('checkout-total').textContent = formatCurrency(total);
-            document.getElementById('total_amount').value = total;
+            document.getElementById('total_amount').value = total.toFixed(2);
         }
         
         function formatCurrency(amount) {
