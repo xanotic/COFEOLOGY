@@ -89,7 +89,7 @@ $stats = $stats_result->fetch_assoc();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orders Management - Cofeology Staff</title>
+    <title>Orders Management - Café Delights Staff</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -242,13 +242,13 @@ $stats = $stats_result->fetch_assoc();
                                             <i class="fas fa-dollar-sign"></i>
                                             <span>RM<?php echo number_format($order['TOT_AMOUNT'], 2); ?></span>
                                         </div>
+                                        <div class="payment-method">
+                                            <i class="fas fa-<?php echo (isset($order['PAYMENT_METHOD']) && $order['PAYMENT_METHOD'] === 'card') ? 'credit-card' : 'money-bill-wave'; ?>"></i>
+                                            <span>Payment: <?php echo ucfirst($order['PAYMENT_METHOD'] ?? 'Cash'); ?></span>
+                                        </div>
                                     </div>
                                     
                                     <div class="order-actions">
-                                        <a href="order-details.php?id=<?php echo $order['ORDER_ID']; ?>" class="btn btn-sm btn-secondary">
-                                            <i class="fas fa-eye"></i> View Details
-                                        </a>
-                                        
                                         <?php if ($order['ORDER_STATUS'] !== 'completed' && $order['ORDER_STATUS'] !== 'cancelled'): ?>
                                         <div class="status-update">
                                             <form method="post" class="status-form">
@@ -406,7 +406,7 @@ $stats = $stats_result->fetch_assoc();
             margin-bottom: 20px;
         }
         
-        .order-type, .order-time, .order-total {
+        .order-type, .order-time, .order-total, .payment-method {
             display: flex;
             align-items: center;
             gap: 8px;
@@ -418,6 +418,11 @@ $stats = $stats_result->fetch_assoc();
         .order-total {
             font-weight: bold;
             color: #28a745;
+        }
+        
+        .payment-method {
+            font-weight: 600;
+            color: #007bff;
         }
         
         .order-actions {
