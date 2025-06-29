@@ -23,7 +23,7 @@ if(file_exists('includes/functions.php')) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Café Delights - Food Ordering System</title>
+    <title>Cofeology - Food Ordering System</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -228,7 +228,7 @@ if(file_exists('includes/functions.php')) {
                 <div class="container">
                     <div class="header-content">
                         <div class="logo">
-                            <h1>Café Delights</h1>
+                            <h1>Cofeology</h1>
                         </div>
                         <nav class="main-nav">
                             <ul>
@@ -247,7 +247,7 @@ if(file_exists('includes/functions.php')) {
     <main>
         <section class="hero">
             <div class="hero-content">
-                <h1>Welcome to Café Delights</h1>
+                <h1>Welcome to Cofeology</h1>
                 <p>Order your favorite meals online for delivery, takeaway, or dine-in</p>
                 <div class="hero-buttons">
                     <a href="menu.php" class="btn btn-primary">View Menu</a>
@@ -365,12 +365,12 @@ if(file_exists('includes/functions.php')) {
                 <div class="container">
                     <div class="footer-content">
                         <div class="footer-section">
-                            <h3>Café Delights</h3>
+                            <h3>Cofeology</h3>
                             <p>Enjoy delicious meals delivered to your doorstep.</p>
                         </div>
                     </div>
                     <div class="footer-bottom">
-                        <p>&copy; ' . date('Y') . ' Café Delights. All rights reserved.</p>
+                        <p>&copy; ' . date('Y') . ' Cofeology. All rights reserved.</p>
                     </div>
                 </div>
               </footer>';

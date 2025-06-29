@@ -1,6 +1,6 @@
 <div class="dashboard-sidebar">
     <div class="sidebar-header">
-        <h2>Café Delights</h2>
+        <h2>Cofeology</h2>
     </div>
     <nav class="sidebar-nav">
         <ul>

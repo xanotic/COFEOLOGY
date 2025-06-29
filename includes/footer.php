@@ -23,7 +23,7 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; <?php echo date('Y'); ?> Café Delights. All rights reserved.</p>
+            <p>&copy; <?php echo date('Y'); ?> Cofeology. All rights reserved.</p>
         </div>
     </div>
 </footer>

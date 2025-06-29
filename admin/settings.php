@@ -28,7 +28,7 @@ $serverSoftware = $_SERVER['SERVER_SOFTWARE'] ?? 'Unknown';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings - Café Delights</title>
+    <title>Settings - Cofeology</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -61,7 +61,7 @@ $serverSoftware = $_SERVER['SERVER_SOFTWARE'] ?? 'Unknown';
                         <form method="post">
                             <div class="form-group">
                                 <label for="site_name" class="form-label">Site Name</label>
-                                <input type="text" id="site_name" name="site_name" class="form-control" value="Café Delights">
+                                <input type="text" id="site_name" name="site_name" class="form-control" value="Cofeology">
                             </div>
                             
                             <div class="form-group">

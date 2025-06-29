@@ -95,7 +95,7 @@ $stats['new_users'] = $result ? $result->fetch_assoc()['total'] : 0;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Users Management - Café Delights</title>
+    <title>Users Management - Cofeology</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/dashboard.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -112,9 +112,6 @@ $stats['new_users'] = $result ? $result->fetch_assoc()['total'] : 0;
                 <div class="header-actions">
                     <button class="btn btn-primary" onclick="openAddStaffModal()">
                         <i class="fas fa-user-plus"></i> Add Staff
-                    </button>
-                    <button class="btn btn-secondary" onclick="exportUsers()">
-                        <i class="fas fa-download"></i> Export
                     </button>
                 </div>
             </header>
@@ -213,9 +210,7 @@ $stats['new_users'] = $result ? $result->fetch_assoc()['total'] : 0;
                                                     <button class="btn-icon" onclick="updateMembership(<?php echo $customer['CUST_ID']; ?>, '<?php echo $customer['MEMBERSHIP']; ?>')" title="Update Membership">
                                                         <i class="fas fa-crown"></i>
                                                     </button>
-                                                    <button class="btn-icon" onclick="viewCustomerDetails(<?php echo $customer['CUST_ID']; ?>)" title="View Details">
-                                                        <i class="fas fa-eye"></i>
-                                                    </button>
+                                                    
                                                 </div>
                                             </td>
                                         </tr>
@@ -256,9 +251,7 @@ $stats['new_users'] = $result ? $result->fetch_assoc()['total'] : 0;
                                             <td><?php echo date('M d, Y', strtotime($member['created_at'])); ?></td>
                                             <td>
                                                 <div class="table-actions">
-                                                    <button class="btn-icon" onclick="viewStaffDetails(<?php echo $member['STAFF_ID']; ?>)" title="View Details">
-                                                        <i class="fas fa-eye"></i>
-                                                    </button>
+                                                    
                                                 </div>
                                             </td>
                                         </tr>
@@ -517,14 +510,6 @@ $stats['new_users'] = $result ? $result->fetch_assoc()['total'] : 0;
         function openAddStaffModal() {
             document.getElementById('staff-form').reset();
             document.getElementById('staff-modal').style.display = 'flex';
-        }
-        
-        function viewCustomerDetails(custId) {
-            window.location.href = 'customer-details.php?id=' + custId;
-        }
-        
-        function viewStaffDetails(staffId) {
-            window.location.href = 'staff-details.php?id=' + staffId;
         }
         
         function closeModal(modalId) {
