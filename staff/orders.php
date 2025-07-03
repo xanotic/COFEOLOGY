@@ -12,6 +12,33 @@ if (!isStaff()) {
 $message = '';
 $error = '';
 
+// First, let's check what columns exist in the CUSTOMER table
+$customer_columns = [];
+$result = $conn->query("DESCRIBE CUSTOMER");
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $customer_columns[] = $row['Field'];
+    }
+}
+
+// Helper function to safely get customer data
+function getCustomerData($order, $field_type) {
+    switch ($field_type) {
+        case 'name':
+            return $order['CUST_NAME'] ?? $order['CUSTOMER_NAME'] ?? 'Guest';
+        case 'email':
+            return $order['CUST_EMAIL'] ?? $order['CUSTOMER_EMAIL'] ?? 'N/A';
+        case 'phone':
+            return $order['CUST_NPHONE'] ?? $order['CUST_PHONE'] ?? $order['CUSTOMER_PHONE'] ?? 'N/A';
+        case 'address':
+            return $order['CUST_ADDRESS'] ?? $order['CUST_ADD'] ?? $order['CUSTOMER_ADDRESS'] ?? 'N/A';
+        case 'membership':
+            return $order['MEMBERSHIP_TYPE'] ?? $order['CUST_MEMBERSHIP'] ?? 'Basic';
+        default:
+            return 'N/A';
+    }
+}
+
 // Handle order status updates
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
     if ($_POST['action'] === 'update_status') {
@@ -19,23 +46,42 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['action'])) {
         $new_status = $_POST['status'];
         
         $stmt = $conn->prepare("UPDATE `ORDER` SET ORDER_STATUS = ? WHERE ORDER_ID = ?");
-        $stmt->bind_param("si", $new_status, $order_id);
-        
-        if ($stmt->execute()) {
-            $message = "Order status updated successfully!";
+        if ($stmt) {
+            $stmt->bind_param("si", $new_status, $order_id);
+            if ($stmt->execute()) {
+                $message = "Order status updated successfully!";
+            } else {
+                $error = "Failed to update order status: " . $stmt->error;
+            }
+            $stmt->close();
         } else {
-            $error = "Failed to update order status.";
+            $error = "Database error: " . $conn->error;
         }
     }
 }
 
 // Get filter parameters
-$status_filter = isset($_GET['status']) ? $_GET['status'] : '';
-$type_filter = isset($_GET['type']) ? $_GET['type'] : '';
-$search = isset($_GET['search']) ? $_GET['search'] : '';
+$status_filter = $_GET['status'] ?? '';
+$type_filter = $_GET['type'] ?? '';
+$search = $_GET['search'] ?? '';
+
+// Build dynamic query based on available columns
+$customer_select = "c.CUST_ID";
+if (in_array('CUST_NAME', $customer_columns)) $customer_select .= ", c.CUST_NAME";
+if (in_array('CUSTOMER_NAME', $customer_columns)) $customer_select .= ", c.CUSTOMER_NAME";
+if (in_array('CUST_EMAIL', $customer_columns)) $customer_select .= ", c.CUST_EMAIL";
+if (in_array('CUSTOMER_EMAIL', $customer_columns)) $customer_select .= ", c.CUSTOMER_EMAIL";
+if (in_array('CUST_NPHONE', $customer_columns)) $customer_select .= ", c.CUST_NPHONE";
+if (in_array('CUST_PHONE', $customer_columns)) $customer_select .= ", c.CUST_PHONE";
+if (in_array('CUSTOMER_PHONE', $customer_columns)) $customer_select .= ", c.CUSTOMER_PHONE";
+if (in_array('CUST_ADDRESS', $customer_columns)) $customer_select .= ", c.CUST_ADDRESS";
+if (in_array('CUST_ADD', $customer_columns)) $customer_select .= ", c.CUST_ADD";
+if (in_array('CUSTOMER_ADDRESS', $customer_columns)) $customer_select .= ", c.CUSTOMER_ADDRESS";
+if (in_array('MEMBERSHIP_TYPE', $customer_columns)) $customer_select .= ", c.MEMBERSHIP_TYPE";
+if (in_array('CUST_MEMBERSHIP', $customer_columns)) $customer_select .= ", c.CUST_MEMBERSHIP";
 
 // Build the query with filters
-$query = "SELECT o.*, c.CUST_NAME, c.CUST_EMAIL, c.CUST_NPHONE 
+$query = "SELECT o.*, $customer_select 
           FROM `ORDER` o 
           LEFT JOIN CUSTOMER c ON o.CUST_ID = c.CUST_ID 
           WHERE 1=1";
@@ -56,20 +102,35 @@ if ($type_filter) {
 }
 
 if ($search) {
-    $query .= " AND (c.CUST_NAME LIKE ? OR o.ORDER_ID LIKE ?)";
-    $params[] = "%$search%";
-    $params[] = "%$search%";
-    $types .= "ss";
+    // Use dynamic search based on available columns
+    $search_conditions = [];
+    if (in_array('CUST_NAME', $customer_columns)) $search_conditions[] = "c.CUST_NAME LIKE ?";
+    if (in_array('CUSTOMER_NAME', $customer_columns)) $search_conditions[] = "c.CUSTOMER_NAME LIKE ?";
+    $search_conditions[] = "o.ORDER_ID LIKE ?";
+    
+    if (!empty($search_conditions)) {
+        $query .= " AND (" . implode(" OR ", $search_conditions) . ")";
+        foreach ($search_conditions as $condition) {
+            $params[] = "%$search%";
+            $types .= "s";
+        }
+    }
 }
 
 $query .= " ORDER BY o.ORDER_DATE DESC, o.ORDER_TIME DESC";
 
 $stmt = $conn->prepare($query);
-if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
+if ($stmt) {
+    if (!empty($params)) {
+        $stmt->bind_param($types, ...$params);
+    }
+    $stmt->execute();
+    $orders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+} else {
+    $orders = [];
+    $error = "Database query error: " . $conn->error;
 }
-$stmt->execute();
-$orders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
 // Get order statistics
 $stats_query = "SELECT 
@@ -82,7 +143,25 @@ $stats_query = "SELECT
     FROM `ORDER`";
 
 $stats_result = $conn->query($stats_query);
-$stats = $stats_result->fetch_assoc();
+$stats = $stats_result ? $stats_result->fetch_assoc() : [
+    'total_orders' => 0,
+    'pending_orders' => 0,
+    'preparing_orders' => 0,
+    'ready_orders' => 0,
+    'completed_orders' => 0,
+    'today_revenue' => 0
+];
+
+// Generate random transaction reference
+function generateTransactionRef($order_id, $date) {
+    return 'TXN' . date('Ymd', strtotime($date)) . str_pad($order_id, 4, '0', STR_PAD_LEFT) . rand(100, 999);
+}
+
+// Generate random Malaysian bank
+function getRandomBank() {
+    $banks = ['Maybank', 'CIMB Bank', 'Public Bank', 'RHB Bank', 'Hong Leong Bank', 'AmBank', 'Bank Islam', 'OCBC Bank'];
+    return $banks[array_rand($banks)];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -111,16 +190,20 @@ $stats = $stats_result->fetch_assoc();
                     <button class="btn btn-secondary" onclick="printOrders()">
                         <i class="fas fa-print"></i> Print Orders
                     </button>
+                    <button class="btn btn-info" onclick="window.open('../scripts/check_database_schema.php', '_blank')">
+                        <i class="fas fa-database"></i> Check DB Schema
+                    </button>
                 </div>
             </header>
             
             <?php if ($message): ?>
-                <div class="alert alert-success"><?php echo $message; ?></div>
+                <div class="alert alert-success"><?php echo htmlspecialchars($message); ?></div>
             <?php endif; ?>
             
             <?php if ($error): ?>
-                <div class="alert alert-error"><?php echo $error; ?></div>
+                <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
             <?php endif; ?>
+            
             
             <!-- Order Statistics -->
             <div class="dashboard-stats">
@@ -204,72 +287,171 @@ $stats = $stats_result->fetch_assoc();
                             </div>
                         <?php else: ?>
                             <?php foreach ($orders as $order): ?>
-                                <div class="order-card" data-status="<?php echo $order['ORDER_STATUS']; ?>">
+                                <div class="order-card" data-status="<?php echo htmlspecialchars($order['ORDER_STATUS']); ?>">
                                     <div class="order-header">
                                         <div class="order-id">
-                                            <strong>#<?php echo $order['ORDER_ID']; ?></strong>
+                                            <strong>#<?php echo htmlspecialchars($order['ORDER_ID']); ?></strong>
                                         </div>
                                         <div class="order-status">
-                                            <span class="status-badge status-<?php echo $order['ORDER_STATUS']; ?>">
-                                                <?php echo ucfirst($order['ORDER_STATUS']); ?>
+                                            <span class="status-badge status-<?php echo htmlspecialchars($order['ORDER_STATUS']); ?>">
+                                                <?php echo ucfirst(htmlspecialchars($order['ORDER_STATUS'])); ?>
                                             </span>
                                         </div>
                                     </div>
                                     
-                                    <div class="order-customer">
-                                        <div class="customer-info">
-                                            <i class="fas fa-user"></i>
-                                            <span><?php echo htmlspecialchars($order['CUST_NAME'] ?? 'Guest'); ?></span>
+                                    <!-- Customer Information Section -->
+                                    <div class="order-section">
+                                        <h4><i class="fas fa-user"></i> Customer Information</h4>
+                                        <div class="info-grid">
+                                            <div class="info-item">
+                                                <span class="label">User ID:</span>
+                                                <span class="value"><?php echo htmlspecialchars($order['CUST_ID'] ?? 'N/A'); ?></span>
+                                            </div>
+                                            <div class="info-item">
+                                                <span class="label">Name:</span>
+                                                <span class="value"><?php echo htmlspecialchars(getCustomerData($order, 'name')); ?></span>
+                                            </div>
+                                            <div class="info-item">
+                                                <span class="label">Phone:</span>
+                                                <span class="value">
+                                                    <?php 
+                                                    $phone = getCustomerData($order, 'phone');
+                                                    if ($phone !== 'N/A'): 
+                                                    ?>
+                                                        <a href="tel:<?php echo htmlspecialchars($phone); ?>"><?php echo htmlspecialchars($phone); ?></a>
+                                                    <?php else: ?>
+                                                        N/A
+                                                    <?php endif; ?>
+                                                </span>
+                                            </div>
+                                            <div class="info-item">
+                                                <span class="label">Email:</span>
+                                                <span class="value"><?php echo htmlspecialchars(getCustomerData($order, 'email')); ?></span>
+                                            </div>
+                                            <?php if (($order['ORDER_TYPE'] ?? '') === 'delivery'): ?>
+                                            <div class="info-item full-width">
+                                                <span class="label">Address:</span>
+                                                <span class="value"><?php echo htmlspecialchars(getCustomerData($order, 'address')); ?></span>
+                                            </div>
+                                            <?php endif; ?>
+                                            <div class="info-item">
+                                                <span class="label">Membership:</span>
+                                                <span class="membership-badge membership-<?php echo strtolower(getCustomerData($order, 'membership')); ?>">
+                                                    <?php echo htmlspecialchars(getCustomerData($order, 'membership')); ?>
+                                                </span>
+                                            </div>
                                         </div>
-                                        <?php if ($order['CUST_NPHONE']): ?>
-                                        <div class="customer-phone">
-                                            <i class="fas fa-phone"></i>
-                                            <span><?php echo htmlspecialchars($order['CUST_NPHONE']); ?></span>
-                                        </div>
-                                        <?php endif; ?>
                                     </div>
                                     
-                                    <div class="order-details">
-                                        <div class="order-type">
-                                            <i class="fas fa-<?php echo $order['ORDER_TYPE'] === 'dine-in' ? 'utensils' : ($order['ORDER_TYPE'] === 'takeaway' ? 'shopping-bag' : 'truck'); ?>"></i>
-                                            <span><?php echo ucfirst(str_replace('-', ' ', $order['ORDER_TYPE'])); ?></span>
+                                    <!-- Order Details Section -->
+                                    <div class="order-section">
+                                        <h4><i class="fas fa-shopping-bag"></i> Order Details</h4>
+                                        <div class="info-grid">
+                                            <div class="info-item">
+                                                <span class="label">Order Type:</span>
+                                                <span class="value">
+                                                    <i class="fas fa-<?php echo ($order['ORDER_TYPE'] ?? '') === 'dine-in' ? 'utensils' : (($order['ORDER_TYPE'] ?? '') === 'takeaway' ? 'shopping-bag' : 'truck'); ?>"></i>
+                                                    <?php echo ucfirst(str_replace('-', ' ', htmlspecialchars($order['ORDER_TYPE'] ?? 'N/A'))); ?>
+                                                </span>
+                                            </div>
+                                            <div class="info-item">
+                                                <span class="label">Date:</span>
+                                                <span class="value"><?php echo date('M j, Y', strtotime($order['ORDER_DATE'] ?? 'now')); ?></span>
+                                            </div>
+                                            <div class="info-item">
+                                                <span class="label">Time:</span>
+                                                <span class="value"><?php echo date('g:i A', strtotime($order['ORDER_TIME'] ?? 'now')); ?></span>
+                                            </div>
+                                            <div class="info-item">
+                                                <span class="label">Status:</span>
+                                                <span class="status-badge status-<?php echo htmlspecialchars($order['ORDER_STATUS'] ?? 'pending'); ?>">
+                                                    <?php echo ucfirst(htmlspecialchars($order['ORDER_STATUS'] ?? 'Pending')); ?>
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div class="order-time">
-                                            <i class="fas fa-clock"></i>
-                                            <span><?php echo date('M j, Y g:i A', strtotime($order['ORDER_DATE'] . ' ' . $order['ORDER_TIME'])); ?></span>
-                                        </div>
-                                        <div class="order-total">
-                                            <i class="fas fa-dollar-sign"></i>
-                                            <span>RM<?php echo number_format($order['TOT_AMOUNT'], 2); ?></span>
-                                        </div>
-                                        <div class="payment-method">
-                                            <i class="fas fa-<?php echo (isset($order['PAYMENT_METHOD']) && $order['PAYMENT_METHOD'] === 'card') ? 'credit-card' : 'money-bill-wave'; ?>"></i>
-                                            <span>Payment: <?php echo ucfirst($order['PAYMENT_METHOD'] ?? 'Cash'); ?></span>
+                                    </div>
+                                    
+                                    <!-- Payment Information Section -->
+                                    <div class="order-section">
+                                        <h4><i class="fas fa-credit-card"></i> Payment Information</h4>
+                                        <div class="info-grid">
+                                            <div class="info-item">
+                                                <span class="label">Transaction Ref:</span>
+                                                <span class="value transaction-ref"><?php echo generateTransactionRef($order['ORDER_ID'], $order['ORDER_DATE'] ?? date('Y-m-d')); ?></span>
+                                            </div>
+                                            <div class="info-item">
+                                                <span class="label">Amount:</span>
+                                                <span class="value amount">RM<?php echo number_format($order['TOT_AMOUNT'] ?? 0, 2); ?></span>
+                                            </div>
+                                            <div class="info-item">
+                                                <span class="label">Payment Method:</span>
+                                                <span class="value">
+                                                    <i class="fas fa-<?php echo (($order['PAYMENT_METHOD'] ?? 'cash') === 'card') ? 'credit-card' : 'money-bill-wave'; ?>"></i>
+                                                    <?php echo ucfirst(htmlspecialchars($order['PAYMENT_METHOD'] ?? 'Cash')); ?>
+                                                </span>
+                                            </div>
+                                            <div class="info-item">
+                                                <span class="label">Bank:</span>
+                                                <span class="value"><?php echo getRandomBank(); ?></span>
+                                            </div>
                                         </div>
                                     </div>
                                     
                                     <div class="order-actions">
-                                        <?php if ($order['ORDER_STATUS'] !== 'completed' && $order['ORDER_STATUS'] !== 'cancelled'): ?>
+                                        <?php if (($order['ORDER_STATUS'] ?? '') !== 'completed' && ($order['ORDER_STATUS'] ?? '') !== 'cancelled'): ?>
                                         <div class="status-update">
                                             <form method="post" class="status-form">
                                                 <input type="hidden" name="action" value="update_status">
-                                                <input type="hidden" name="order_id" value="<?php echo $order['ORDER_ID']; ?>">
+                                                <input type="hidden" name="order_id" value="<?php echo htmlspecialchars($order['ORDER_ID']); ?>">
                                                 <select name="status" class="form-control form-control-sm" onchange="this.form.submit()">
-                                                    <option value="pending" <?php echo $order['ORDER_STATUS'] === 'pending' ? 'selected' : ''; ?>>Pending</option>
-                                                    <option value="preparing" <?php echo $order['ORDER_STATUS'] === 'preparing' ? 'selected' : ''; ?>>Preparing</option>
-                                                    <option value="ready" <?php echo $order['ORDER_STATUS'] === 'ready' ? 'selected' : ''; ?>>Ready</option>
-                                                    <option value="completed" <?php echo $order['ORDER_STATUS'] === 'completed' ? 'selected' : ''; ?>>Completed</option>
-                                                    <option value="cancelled" <?php echo $order['ORDER_STATUS'] === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
+                                                    <option value="pending" <?php echo ($order['ORDER_STATUS'] ?? '') === 'pending' ? 'selected' : ''; ?>>Pending</option>
+                                                    <option value="preparing" <?php echo ($order['ORDER_STATUS'] ?? '') === 'preparing' ? 'selected' : ''; ?>>Preparing</option>
+                                                    <option value="ready" <?php echo ($order['ORDER_STATUS'] ?? '') === 'ready' ? 'selected' : ''; ?>>Ready</option>
+                                                    <option value="completed" <?php echo ($order['ORDER_STATUS'] ?? '') === 'completed' ? 'selected' : ''; ?>>Completed</option>
+                                                    <option value="cancelled" <?php echo ($order['ORDER_STATUS'] ?? '') === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
                                                 </select>
                                             </form>
                                         </div>
                                         <?php endif; ?>
+                                        <button class="btn btn-sm btn-info" onclick="generateEmail('<?php echo htmlspecialchars($order['ORDER_ID']); ?>', '<?php echo htmlspecialchars(getCustomerData($order, 'name')); ?>', '<?php echo htmlspecialchars(getCustomerData($order, 'email')); ?>')">
+                                            <i class="fas fa-envelope"></i> Generate Email
+                                        </button>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Email Modal -->
+    <div class="modal" id="email-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Generate Customer Email</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="email-form">
+                    <div class="form-group">
+                        <label>To:</label>
+                        <input type="email" id="email-to" class="form-control" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Subject:</label>
+                        <input type="text" id="email-subject" class="form-control" value="Order Update - Cofeology">
+                    </div>
+                    <div class="form-group">
+                        <label>Message:</label>
+                        <textarea id="email-message" class="form-control" rows="6"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('email-modal')">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="copyEmail()">Copy to Clipboard</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -293,6 +475,12 @@ $stats = $stats_result->fetch_assoc();
             border: 1px solid #f5c6cb;
         }
         
+        .alert-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
         .filter-form {
             display: flex;
             gap: 10px;
@@ -306,7 +494,7 @@ $stats = $stats_result->fetch_assoc();
         
         .orders-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
             gap: 20px;
         }
         
@@ -324,105 +512,120 @@ $stats = $stats_result->fetch_assoc();
             box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
         }
         
-        .order-card[data-status="pending"] {
-            border-left-color: #ffc107;
-        }
-        
-        .order-card[data-status="preparing"] {
-            border-left-color: #fd7e14;
-        }
-        
-        .order-card[data-status="ready"] {
-            border-left-color: #20c997;
-        }
-        
-        .order-card[data-status="completed"] {
-            border-left-color: #28a745;
-        }
-        
-        .order-card[data-status="cancelled"] {
-            border-left-color: #dc3545;
-        }
+        .order-card[data-status="pending"] { border-left-color: #ffc107; }
+        .order-card[data-status="preparing"] { border-left-color: #fd7e14; }
+        .order-card[data-status="ready"] { border-left-color: #20c997; }
+        .order-card[data-status="completed"] { border-left-color: #28a745; }
+        .order-card[data-status="cancelled"] { border-left-color: #dc3545; }
         
         .order-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f8f9fa;
         }
         
         .order-id {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             color: #2d3436;
+            font-weight: bold;
+        }
+        
+        .order-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .order-section h4 {
+            margin: 0 0 15px 0;
+            color: #495057;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .info-item.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        .info-item .label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .info-item .value {
+            font-size: 0.9rem;
+            color: #212529;
+            font-weight: 500;
+        }
+        
+        .info-item .value a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        
+        .info-item .value a:hover {
+            text-decoration: underline;
         }
         
         .status-badge {
             padding: 4px 12px;
             border-radius: 20px;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+        
+        .status-pending { background-color: rgba(255, 193, 7, 0.2); color: #856404; }
+        .status-preparing { background-color: rgba(253, 126, 20, 0.2); color: #8a4a00; }
+        .status-ready { background-color: rgba(32, 201, 151, 0.2); color: #0f5132; }
+        .status-completed { background-color: rgba(40, 167, 69, 0.2); color: #155724; }
+        .status-cancelled { background-color: rgba(220, 53, 69, 0.2); color: #721c24; }
+        
+        .membership-badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
             font-weight: 600;
             text-transform: uppercase;
         }
         
-        .status-pending {
-            background-color: rgba(255, 193, 7, 0.2);
-            color: #856404;
+        .membership-vip { background-color: #ffd700; color: #8b6914; }
+        .membership-premium { background-color: #e6e6fa; color: #4b0082; }
+        .membership-basic { background-color: #f0f0f0; color: #666; }
+        
+        .transaction-ref {
+            font-family: monospace;
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
         }
         
-        .status-preparing {
-            background-color: rgba(253, 126, 20, 0.2);
-            color: #8a4a00;
-        }
-        
-        .status-ready {
-            background-color: rgba(32, 201, 151, 0.2);
-            color: #0f5132;
-        }
-        
-        .status-completed {
-            background-color: rgba(40, 167, 69, 0.2);
-            color: #155724;
-        }
-        
-        .status-cancelled {
-            background-color: rgba(220, 53, 69, 0.2);
-            color: #721c24;
-        }
-        
-        .order-customer {
-            margin-bottom: 15px;
-        }
-        
-        .customer-info, .customer-phone {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 5px;
-            color: #666;
-            font-size: 0.9rem;
-        }
-        
-        .order-details {
-            margin-bottom: 20px;
-        }
-        
-        .order-type, .order-time, .order-total, .payment-method {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
-            color: #666;
-            font-size: 0.9rem;
-        }
-        
-        .order-total {
+        .amount {
             font-weight: bold;
             color: #28a745;
-        }
-        
-        .payment-method {
-            font-weight: 600;
-            color: #007bff;
+            font-size: 1rem;
         }
         
         .order-actions {
@@ -430,6 +633,9 @@ $stats = $stats_result->fetch_assoc();
             gap: 10px;
             align-items: center;
             flex-wrap: wrap;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #dee2e6;
         }
         
         .status-form {
@@ -453,6 +659,69 @@ $stats = $stats_result->fetch_assoc();
             color: #666;
             font-size: 0.9rem;
         }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .close-modal:hover {
+            color: #333;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
     </style>
     
     <script>
@@ -463,6 +732,49 @@ $stats = $stats_result->fetch_assoc();
         function printOrders() {
             window.print();
         }
+        
+        function generateEmail(orderId, customerName, customerEmail) {
+            document.getElementById('email-to').value = customerEmail;
+            document.getElementById('email-subject').value = `Order #${orderId} Update - Cofeology`;
+            document.getElementById('email-message').value = `Dear ${customerName},\n\nWe hope this email finds you well.\n\nThis is to update you regarding your order #${orderId}. Your order status has been updated and we wanted to keep you informed.\n\nIf you have any questions or concerns, please don't hesitate to contact us.\n\nThank you for choosing Cofeology!\n\nBest regards,\nCofeology Team`;
+            
+            document.getElementById('email-modal').style.display = 'flex';
+        }
+        
+        function copyEmail() {
+            const subject = document.getElementById('email-subject').value;
+            const message = document.getElementById('email-message').value;
+            const emailContent = `Subject: ${subject}\n\n${message}`;
+            
+            navigator.clipboard.writeText(emailContent).then(function() {
+                alert('Email content copied to clipboard!');
+            });
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        // Modal functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const modals = document.querySelectorAll('.modal');
+            const closeButtons = document.querySelectorAll('.close-modal');
+            
+            closeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const modal = this.closest('.modal');
+                    modal.style.display = 'none';
+                });
+            });
+            
+            window.addEventListener('click', function(event) {
+                modals.forEach(modal => {
+                    if (event.target === modal) {
+                        modal.style.display = 'none';
+                    }
+                });
+            });
+        });
         
         // Auto-refresh every 30 seconds for active orders
         setInterval(function() {

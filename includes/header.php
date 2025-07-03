@@ -1,9 +1,14 @@
+<?php
+// Determine user type for header display
+$is_admin = isset($_SESSION['admin_id']) || isset($_SESSION['admin_logged_in']) || (isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'admin') || (isset($_SESSION['role']) && $_SESSION['role'] === 'admin');
+$is_staff = isset($_SESSION['staff_id']) || isset($_SESSION['staff_logged_in']) || (isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'staff') || (isset($_SESSION['role']) && $_SESSION['role'] === 'staff');
+?>
 <header class="site-header">
     <div class="container">
         <div class="header-content">
             <div class="logo">
                 <a href="index.php">
-                    <h1>Cofeology</h1>
+                    <h1>Café Dels</h1>
                 </a>
             </div>
             <nav class="main-nav">
@@ -36,10 +41,15 @@
                     <a href="login.php" class="btn btn-secondary">Login</a>
                     <a href="register.php" class="btn btn-primary">Register</a>
                 <?php endif; ?>
-                <a href="cart.php" class="cart-icon">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span class="cart-count" id="cart-count">0</span>
-                </a>
+                
+                <!-- Only show cart for customers, not admin or staff -->
+                <?php if (!$is_admin && !$is_staff): ?>
+                    <a href="cart.php" class="cart-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count" id="cart-count">0</span>
+                    </a>
+                <?php endif; ?>
+                
                 <button class="mobile-menu-toggle">
                     <span></span>
                     <span></span>

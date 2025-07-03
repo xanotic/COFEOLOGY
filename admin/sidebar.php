@@ -35,13 +35,6 @@
                     <span>Reports</span>
                 </a>
             </li>
-            <li class="nav-divider"></li>
-            <li>
-                <a href="../staff/dashboard.php">
-                    <i class="fas fa-user-tie"></i>
-                    <span>Staff Panel</span>
-                </a>
-            </li>
             <li>
                 <a href="../index.php">
                     <i class="fas fa-home"></i>
