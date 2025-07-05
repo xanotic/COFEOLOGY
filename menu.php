@@ -137,6 +137,7 @@ $is_guest = !isset($_SESSION['user_id']) && !$is_admin && !$is_staff;
         }
         
         .category-section {
+            font-family: 'Poppins', sans-serif;
             margin-bottom: 60px;
         }
         
