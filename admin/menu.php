@@ -153,6 +153,7 @@ $stats['categories'] = $result ? $result->fetch_assoc()['total'] : 0;
     <title>Menu Management - Cofeology Admin</title>
     <link rel="stylesheet" href="../css/style.css?v=1.1">
     <link rel="stylesheet" href="../css/dashboard.css?v=1.1">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>

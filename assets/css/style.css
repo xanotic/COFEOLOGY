@@ -6,7 +6,7 @@
 }
 
 body {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Poppins', Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.6;
   color: #333;
   background-color: #f9f9f9;
@@ -34,16 +34,23 @@ img {
 }
 
 .btn {
-  display: inline-block;
-  padding: 10px 20px;
+  font-family: 'Poppins', sans-serif;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;            /* ✅ fixed width */
+  height: 45px;            /* ✅ fixed height */
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-weight: 600;
   transition: all 0.3s ease;
+  text-align: center;
+  text-decoration: none;
 }
 
 .btn-primary {
+  font-family: 'Poppins', sans-serif;
   background-color: #ff6b6b;
   color: white;
 }

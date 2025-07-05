@@ -449,6 +449,7 @@ img {
 }
 
 .form-control {
+  font-family: 'Poppins', sans-serif;
   width: 100%;
   padding: 10px 15px;
   border: 1px solid #ddd;
@@ -872,3 +873,34 @@ img {
     margin: 0 auto;
   }
 }
+.quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 10px 0;
+}
+
+.quick-action-btn {
+  flex: 1 1 calc(25% - 20px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 20px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  text-decoration: none;
+  color: #333;
+  transition: transform 0.3s ease;
+  min-width: 150px;
+  height: 120px;
+}
+
+.quick-action-btn:hover {
+  transform: translateY(-5px);
+  background-color: #ffb3c6;
+}
+
