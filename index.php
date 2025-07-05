@@ -35,10 +35,22 @@ if(file_exists('includes/functions.php')) {
             background-color: #f5f5f5;
         }
         .hero {
-            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+            /* Background GIF */
+            background-image: url('https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
             color: white;
             text-align: center;
             padding: 100px 20px;
+            opacity: 0.5; /* transparency */
+        }
+        
+        
+        .hero-content {
+            position: relative;
+            z-index: 2;
         }
         .hero h1 {
             font-size: 3rem;
@@ -215,6 +227,9 @@ if(file_exists('includes/functions.php')) {
             text-align: center;
             padding: 40px;
             color: #666;
+        }
+        .hero h1, .hero p {
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
         }
     </style>
 </head>
