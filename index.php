@@ -29,10 +29,10 @@ if(file_exists('includes/functions.php')) {
     <style>
         /* Inline CSS as backup */
         body {
-            font-family: Arial, sans-serif;
+            font-family: Nunito, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f5f5f5;
+            background-color:rgb(247, 247, 247);
         }
         .hero {
             /* Background GIF */
@@ -44,7 +44,7 @@ if(file_exists('includes/functions.php')) {
             color: white;
             text-align: center;
             padding: 100px 20px;
-            opacity: 0.5; /* transparency */
+            opacity: 0.9; /* transparency */
         }
         
         
@@ -282,7 +282,7 @@ if(file_exists('includes/functions.php')) {
                             <i class="fas fa-utensils"></i>
                         </div>
                         <h3>Browse Menu</h3>
-                        <p>Explore our delicious offerings and find your favorites</p>
+                        <p>Explore our delicious offerings and find your favorites!</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">
@@ -296,7 +296,7 @@ if(file_exists('includes/functions.php')) {
                             <i class="fas fa-map-marker-alt"></i>
                         </div>
                         <h3>Choose Delivery Option</h3>
-                        <p>Select delivery, takeaway, or dine-in</p>
+                        <p>Select Delivery, Takeaway, or Dine-In</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">
