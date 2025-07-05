@@ -146,6 +146,22 @@ if ($result) {
     <link rel="stylesheet" href="../css/dashboard.css?v=1.1">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif !important;
+        }
+        .dashboard-header h1,
+        .card-header h2,
+        .stat-info h3,
+        .table th,
+        .table td,
+        .btn,
+        .form-control,
+        .modal-header h3,
+        .form-label {
+            font-family: 'Poppins', sans-serif !important;
+        }
+    </style>
 </head>
 <body>
     <div class="dashboard-container">
