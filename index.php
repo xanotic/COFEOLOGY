@@ -350,8 +350,8 @@ if(file_exists('includes/functions.php')) {
                                     echo '<div class="item-price" style="font-size: 1.4rem; font-weight: 700; color: #FF6B6B;">RM ' . number_format((float)$itemPrice, 2) . '</div>';
                                     echo '</div>';
                                     echo '<div class="item-actions" style="display: flex; gap: 10px;">';
-                                    echo '<button class="btn btn-primary" style="flex: 1; background: #FF6B6B; border: none; color: white; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.3s;" onclick="addToCart(' . (int)$itemId . ', \'' . addslashes($itemName) . '\', ' . (float)$itemPrice . ', \'' . addslashes($itemImage) . '\')">Add to Cart</button>';
-                                    echo '<a href="menu.php" class="btn btn-secondary" style="flex: 1; background: transparent; border: 2px solid #FF6B6B; color: #FF6B6B; padding: 12px; border-radius: 8px; font-weight: 600; text-decoration: none; text-align: center; transition: all 0.3s;">View Menu</a>';
+                                    echo '<button class="btn btn-primary" style="flex: 1; background: #FF6B6B; border: none; color: white; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.3s; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 14px;" onclick="addToCart(' . (int)$itemId . ', \'' . addslashes($itemName) . '\', ' . (float)$itemPrice . ', \'' . addslashes($itemImage) . '\')">Add to Cart</button>';
+                                    echo '<button onclick="window.location.href=\'menu.php\'" class="btn btn-secondary" style="flex: 1; background: transparent; border: 2px solid #FF6B6B; color: #FF6B6B; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 14px;">View Menu</button>';
                                     echo '</div>';
                                     echo '</div>';
                                     echo '</div>';
