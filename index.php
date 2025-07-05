@@ -24,16 +24,20 @@ if(file_exists('includes/functions.php')) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cofeology - Food Ordering System</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css?v=1.1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         /* Inline CSS as backup */
         body {
-            font-family: Nunito, sans-serif;
+            font-family: Montserrat, sans-serif;
             margin: 0;
             padding: 0;
             background-color:rgb(247, 247, 247);
         }
+        
         .hero {
             /* Background GIF */
             background-image: url('https://animesher.com/orig/2/205/2059/20591/animesher.com_food-aesthetic-gif-2059113.gif');
