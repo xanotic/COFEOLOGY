@@ -262,12 +262,12 @@ if(file_exists('includes/functions.php')) {
     <main>
         <section class="hero">
             <div class="hero-content">
-                <h1>Welcome to Cofeology</h1>
+                <h1>Welcome to ⋆ COFEOLOGY ⋆</h1>
                 <p>Order your favorite meals online for delivery, takeaway, or dine-in</p>
                 <div class="hero-buttons">
                     <a href="menu.php" class="btn btn-primary">View Menu</a>
                     <?php if(!isset($_SESSION['user_id'])): ?>
-                        <a href="login.php" class="btn btn-secondary">Login / Register</a>
+                        <a href="login.php" class="btn btn-secondary">Log In / Register</a>
                     <?php endif; ?>
                 </div>
             </div>
@@ -289,7 +289,7 @@ if(file_exists('includes/functions.php')) {
                             <i class="fas fa-shopping-cart"></i>
                         </div>
                         <h3>Place Order</h3>
-                        <p>Customize your meal and add it to your cart</p>
+                        <p>Customize your meal and add it to your cart.</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">

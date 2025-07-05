@@ -8,7 +8,7 @@ $is_staff = isset($_SESSION['staff_id']) || isset($_SESSION['staff_logged_in']) 
         <div class="header-content">
             <div class="logo">
                 <a href="index.php">
-                    <h1>Cofeology </h1>
+                    <h1>COFEOLOGY </h1>
                 </a>
             </div>
             <nav class="main-nav">
@@ -34,11 +34,11 @@ $is_staff = isset($_SESSION['staff_id']) || isset($_SESSION['staff_logged_in']) 
                             <span><?php echo $_SESSION['user_name']; ?></span>
                         </button>
                         <div class="user-dropdown">
-                            <a href="logout.php">Logout</a>
+                            <a href="logout.php">Log Out</a>
                         </div>
                     </div>
                 <?php else: ?>
-                    <a href="login.php" class="btn btn-secondary">Login</a>
+                    <a href="login.php" class="btn btn-secondary">Log In</a>
                     <a href="register.php" class="btn btn-primary">Register</a>
                 <?php endif; ?>
                 
