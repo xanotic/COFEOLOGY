@@ -61,6 +61,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment - Cofeology</title>
     <link rel="stylesheet" href="css/style.css?">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
@@ -120,6 +121,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                             <option value="public">Public Bank</option>
                                             <option value="rhb">RHB Bank</option>
                                             <option value="hong_leong">Hong Leong Bank</option>
+                                            <option value="bank_islam">Bank Islam</option>
                                         </select>
                                     </div>
                                 </div>
