@@ -267,7 +267,7 @@ if(file_exists('includes/functions.php')) {
         <section class="hero">
             <div class="hero-content">
                 <h1 class="cafe-name">Welcome to ⋆ COFEOLOGY ⋆</h1>
-                <p>Order your favorite meals online for delivery, takeaway, or dine-in</p>
+                <p>Order your favorite meals online for delivery, takeaway, or dine-in!</p>
                 <div class="hero-buttons">
                     <a href="menu.php" class="btn btn-primary">View Menu</a>
                     <?php if(!isset($_SESSION['user_id'])): ?>

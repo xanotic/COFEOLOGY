@@ -18,7 +18,7 @@
             </div>
         </div>
         <div class="footer-bottom">
-            <p>&copy; <?php echo date('Y'); ?> COFEOLOGY 2025. All rights reserved.</p>
+            <p>&copy; <?php echo date('Y'); ?> COFEOLOGY. All rights reserved.</p>
         </div>
     </div>
 </footer>
