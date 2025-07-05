@@ -270,6 +270,7 @@
 }
 
 .refresh-btn {
+  font-family: 'Poppins', sans-serif;
   display: flex;
   align-items: center;
   gap: 5px;
