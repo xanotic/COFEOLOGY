@@ -282,14 +282,14 @@ if(file_exists('includes/functions.php')) {
                             <i class="fas fa-utensils"></i>
                         </div>
                         <h3>Browse Menu</h3>
-                        <p>Explore our delicious offerings and find your favorites!</p>
+                        <p>Explore our delicious offerings and find your favorites</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">
                             <i class="fas fa-shopping-cart"></i>
                         </div>
                         <h3>Place Order</h3>
-                        <p>Customize your meal and add it to your cart.</p>
+                        <p>Customize your meal and add it to your cart</p>
                     </div>
                     <div class="feature-card">
                         <div class="feature-icon">
