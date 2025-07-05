@@ -36,7 +36,7 @@ if(file_exists('includes/functions.php')) {
         }
         .hero {
             /* Background GIF */
-            background-image: url('https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif');
+            background-image: url('https://animesher.com/orig/2/205/2059/20591/animesher.com_food-aesthetic-gif-2059113.gif');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
