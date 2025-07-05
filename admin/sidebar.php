@@ -1,6 +1,6 @@
 <div class="dashboard-sidebar">
     <div class="sidebar-header">
-        <h2>Cofeology</h2>
+        <h2 class="cafe-name">Cofeology</h2>
         <span class="admin-badge">Admin Panel</span>
     </div>
     <nav class="sidebar-nav">
