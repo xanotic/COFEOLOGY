@@ -315,8 +315,11 @@ if(file_exists('includes/functions.php')) {
 
         <section class="popular-items">
             <div class="container">
-                <h2 class="section-title">Popular Items</h2>
-                <div class="menu-grid" id="popular-items-container">
+                <h2 class="section-title" style="color: #8B4513; font-size: 2.2rem; font-weight: 700; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 4px solid #8B4513; text-align: center; position: relative;">
+                    Popular Items
+                    <div style="content: ''; position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%); width: 100px; height: 4px; background: linear-gradient(90deg, #8B4513, #A0522D); border-radius: 2px;"></div>
+                </h2>
+                <div class="menu-grid" id="popular-items-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; padding: 0 20px;">
                     <?php
                     // Try to load popular items from database
                     if($conn && function_exists('getPopularItems')) {
@@ -333,40 +336,40 @@ if(file_exists('includes/functions.php')) {
 
                                     // Use placeholder if no image or if image is empty
                                     if(empty($itemImage)) {
-                                        $itemImage = 'https://via.placeholder.com/280x200/ff6b6b/ffffff?text=' . urlencode($itemName);
+                                        $itemImage = 'https://via.placeholder.com/320x220/8B4513/ffffff?text=' . urlencode($itemName);
                                     }
                                     
-                                    echo '<div class="menu-item">';
-                                    echo '<div class="menu-item-image">';
-                                    echo '<img src="' . htmlspecialchars($itemImage) . '" alt="' . htmlspecialchars($itemName) . '" onerror="this.src=\'https://via.placeholder.com/280x200/ff6b6b/ffffff?text=' . urlencode($itemName) . '\'">';
+                                    echo '<div class="menu-item-card" style="background: white; border-radius: 15px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); overflow: hidden; transition: transform 0.3s, box-shadow 0.3s;">';
+                                    echo '<div class="item-image" style="position: relative; height: 220px; overflow: hidden;">';
+                                    echo '<img src="' . htmlspecialchars($itemImage) . '" alt="' . htmlspecialchars($itemName) . '" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s;" onerror="this.src=\'https://via.placeholder.com/320x220/8B4513/ffffff?text=' . urlencode($itemName) . '\'">';
                                     echo '</div>';
-                                    echo '<div class="menu-item-content">';
-                                    echo '<div class="menu-item-title">';
-                                    echo '<h3>' . htmlspecialchars($itemName) . '</h3>';
-                                    echo '<div class="menu-item-price">RM ' . number_format((float)$itemPrice, 2) . '</div>';
+                                    echo '<div class="item-details" style="padding: 20px;">';
+                                    echo '<div class="item-name" style="font-size: 1.3rem; font-weight: 600; color: #333; margin-bottom: 10px;">' . htmlspecialchars($itemName) . '</div>';
+                                    echo '<div class="item-description" style="color: #666; font-size: 0.95rem; line-height: 1.5; margin-bottom: 15px; height: 45px; overflow: hidden; text-overflow: ellipsis;">' . htmlspecialchars($itemDescription) . '</div>';
+                                    echo '<div class="item-info" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">';
+                                    echo '<div class="item-price" style="font-size: 1.4rem; font-weight: 700; color: #8B4513;">RM ' . number_format((float)$itemPrice, 2) . '</div>';
                                     echo '</div>';
-                                    echo '<div class="menu-item-description">' . htmlspecialchars($itemDescription) . '</div>';
-                                    echo '<div class="menu-item-actions">';
-                                    echo '<button class="btn btn-primary btn-sm" onclick="addToCart(' . (int)$itemId . ', \'' . addslashes($itemName) . '\', ' . (float)$itemPrice . ', \'' . addslashes($itemImage) . '\')">Add to Cart</button>';
-                                    echo '<a href="menu.php" class="btn btn-secondary btn-sm">View Menu</a>';
+                                    echo '<div class="item-actions" style="display: flex; gap: 10px;">';
+                                    echo '<button class="btn btn-primary" style="flex: 1; background: #8B4513; border: none; color: white; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.3s;" onclick="addToCart(' . (int)$itemId . ', \'' . addslashes($itemName) . '\', ' . (float)$itemPrice . ', \'' . addslashes($itemImage) . '\')">Add to Cart</button>';
+                                    echo '<a href="menu.php" class="btn btn-secondary" style="flex: 1; background: transparent; border: 2px solid #8B4513; color: #8B4513; padding: 12px; border-radius: 8px; font-weight: 600; text-decoration: none; text-align: center; transition: all 0.3s;">View Menu</a>';
                                     echo '</div>';
                                     echo '</div>';
                                     echo '</div>';
                                 }
                             } else {
-                                echo '<div class="empty-message">';
-                                echo '<p>No popular items available at the moment. <a href="menu.php">Browse our full menu</a></p>';
+                                echo '<div class="empty-message" style="text-align: center; padding: 40px; color: #666; grid-column: 1 / -1;">';
+                                echo '<p>No popular items available at the moment. <a href="menu.php" style="color: #8B4513;">Browse our full menu</a></p>';
                                 echo '</div>';
                             }
                         } catch(Exception $e) {
-                            echo '<div class="empty-message">';
-                            echo '<p>Unable to load popular items. <a href="menu.php">Browse our full menu</a></p>';
+                            echo '<div class="empty-message" style="text-align: center; padding: 40px; color: #666; grid-column: 1 / -1;">';
+                            echo '<p>Unable to load popular items. <a href="menu.php" style="color: #8B4513;">Browse our full menu</a></p>';
                             echo '</div>';
                         }
                     } else {
-                        echo '<div class="empty-message">';
+                        echo '<div class="empty-message" style="text-align: center; padding: 40px; color: #666; grid-column: 1 / -1;">';
                         echo '<p>Database not connected. Please run the setup script first.</p>';
-                        echo '<p><a href="scripts/setup.php" class="btn btn-primary">Run Setup</a></p>';
+                        echo '<p><a href="scripts/setup.php" class="btn btn-primary" style="background: #8B4513; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none;">Run Setup</a></p>';
                         echo '</div>';
                     }
                     ?>
