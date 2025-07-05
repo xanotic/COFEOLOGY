@@ -201,7 +201,7 @@ function createOrder($conn, $cust_id, $order_type, $total_amount, $delivery_addr
     
     $stmt = $conn->prepare("INSERT INTO `ORDER` (ORDER_NUMBER, ORDER_TIME, ORDER_DATE, ORDER_TYPE, TOT_AMOUNT, DELIVERY_ADDRESS, PAYMENT_METHOD, CUST_ID, special_instructions, pickup_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     if($stmt) {
-        $stmt->bind_param("ssssdssiis", $order_number, $order_time, $order_date, $order_type, $total_amount, $delivery_address, $payment_method, $cust_id, $special_instructions, $pickup_time);
+        $stmt->bind_param("ssssdsssss", $order_number, $order_time, $order_date, $order_type, $total_amount, $delivery_address, $payment_method, $cust_id, $special_instructions, $pickup_time);
         
         if ($stmt->execute()) {
             $order_id = $conn->insert_id;
