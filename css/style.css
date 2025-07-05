@@ -1,5 +1,10 @@
+@font-face {
+  font-family: 'OrangeGummy';
+  src: url('fonts/Orange\ Gummy.ttf') format('opentype');
+}
+
 /* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 /* Change 'Montserrat' to your new font name */
 
 /* Base Styles */
@@ -25,12 +30,19 @@
 }
 
 body {
-  font-family: 'Montserrat', "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Poppins', "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   /* Change 'Montserrat' to your new font name */
   line-height: 1.6;
   color: var(--dark-color);
   background-color: #f5f5f5;
 }
+.cafe-name {
+  font-family: 'OrangeGummy', cursive;
+  font-size: 6.0rem;  /* optional */
+  letter-spacing: 2.0px; /* optional */
+  
+}
+
 
 .container {
   width: 100%;
