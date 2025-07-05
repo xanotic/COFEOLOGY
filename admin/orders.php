@@ -247,8 +247,8 @@ if ($result) {
                                 <option value="delivery" <?php echo $type_filter === 'delivery' ? 'selected' : ''; ?>>Delivery</option>
                             </select>
                             <input type="date" name="date" value="<?php echo $date_filter; ?>" class="form-control">
-                            <button type="submit" class="btn btn-primary">Filter</button>
-                            <a href="orders.php" class="btn btn-secondary">Clear</a>
+                            <button type="submit" class="btn btn-primary" style="min-width: 80px; height: 40px; font-size: 14px; font-weight: 500;">Filter</button>
+                            <a href="orders.php" class="btn btn-secondary" style="min-width: 80px; height: 40px; display: inline-flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500;">Clear</a>
                         </form>
                     </div>
                 </div>
