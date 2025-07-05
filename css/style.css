@@ -205,6 +205,7 @@ img {
 }
 
 .user-menu-btn {
+  font-family: 'Poppins', sans-serif;
   display: flex;
   align-items: center;
   background: none;

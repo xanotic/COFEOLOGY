@@ -44,7 +44,7 @@ $is_guest = !isset($_SESSION['user_id']) && !$is_admin && !$is_staff;
     <title>Menu - Cofeology</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css?v=1.1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
@@ -82,6 +82,7 @@ $is_guest = !isset($_SESSION['user_id']) && !$is_admin && !$is_staff;
         }
         
         .search-input {
+            font-family: 'Poppins', sans-serif;
             width: 100%;
             padding: 12px 45px 12px 15px;
             border: 2px solid #ddd;
@@ -113,6 +114,7 @@ $is_guest = !isset($_SESSION['user_id']) && !$is_admin && !$is_staff;
         }
         
         .category-btn {
+            font-family: 'Poppins', sans-serif;
             padding: 10px 20px;
             background: white;
             border: 2px solid #FF6B6B;
