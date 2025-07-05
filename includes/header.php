@@ -8,7 +8,7 @@ $is_staff = isset($_SESSION['staff_id']) || isset($_SESSION['staff_logged_in']) 
         <div class="header-content">
             <div class="logo">
                 <a href="index.php">
-                    <h1>Café Dels</h1>
+                    <h1>Cofeology </h1>
                 </a>
             </div>
             <nav class="main-nav">
