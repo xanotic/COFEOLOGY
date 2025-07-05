@@ -60,7 +60,7 @@ $is_guest = !isset($_SESSION['user_id']) && !$is_admin && !$is_staff;
         
         .page-header h1 {
             font-size: 2.5rem;
-            color: #8B4513;
+            color: #FF6B6B;
             margin-bottom: 10px;
         }
         
@@ -92,7 +92,7 @@ $is_guest = !isset($_SESSION['user_id']) && !$is_admin && !$is_staff;
         }
         
         .search-input:focus {
-            border-color: #8B4513;
+            border-color: #FF6B6B;
         }
         
         .search-icon {
@@ -115,9 +115,9 @@ $is_guest = !isset($_SESSION['user_id']) && !$is_admin && !$is_staff;
         .category-btn {
             padding: 10px 20px;
             background: white;
-            border: 2px solid #8B4513;
+            border: 2px solid #FF6B6B;
             border-radius: 25px;
-            color: #8B4513;
+            color: #FF6B6B;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
@@ -126,7 +126,7 @@ $is_guest = !isset($_SESSION['user_id']) && !$is_admin && !$is_staff;
         
         .category-btn:hover,
         .category-btn.active {
-            background: #8B4513;
+            background: #FF6B6B;
             color: white;
         }
         
@@ -141,10 +141,10 @@ $is_guest = !isset($_SESSION['user_id']) && !$is_admin && !$is_staff;
         .category-title {
             font-size: 2.2rem;
             font-weight: 700;
-            color: #8B4513;
+            color: #FF6B6B;
             margin-bottom: 30px;
             padding-bottom: 15px;
-            border-bottom: 4px solid #8B4513;
+            border-bottom: 4px solid #FF6B6B;
             text-align: center;
             text-transform: capitalize;
             position: relative;
@@ -158,7 +158,7 @@ $is_guest = !isset($_SESSION['user_id']) && !$is_admin && !$is_staff;
             transform: translateX(-50%);
             width: 100px;
             height: 4px;
-            background: linear-gradient(90deg, #8B4513, #A0522D);
+            background: linear-gradient(90deg, #FF6B6B, #A0522D);
             border-radius: 2px;
         }
         
@@ -245,7 +245,7 @@ $is_guest = !isset($_SESSION['user_id']) && !$is_admin && !$is_staff;
         .item-price {
             font-size: 1.4rem;
             font-weight: 700;
-            color: #8B4513;
+            color: #FF6B6B;
         }
         
         .stock-info {
@@ -269,7 +269,7 @@ $is_guest = !isset($_SESSION['user_id']) && !$is_admin && !$is_staff;
         .add-to-cart-btn {
             width: 100%;
             padding: 12px;
-            background: linear-gradient(135deg, #8B4513, #A0522D);
+            background: linear-gradient(135deg, #FF6B6B, #A0522D);
             color: white;
             border: none;
             border-radius: 8px;
@@ -284,7 +284,7 @@ $is_guest = !isset($_SESSION['user_id']) && !$is_admin && !$is_staff;
         }
         
         .add-to-cart-btn:hover {
-            background: linear-gradient(135deg, #A0522D, #8B4513);
+            background: linear-gradient(135deg, #A0522D, #FF6B6B);
             transform: translateY(-2px);
         }
         
@@ -392,7 +392,7 @@ $is_guest = !isset($_SESSION['user_id']) && !$is_admin && !$is_staff;
             <div class="menu-container">
                 <?php if (empty($grouped_items)): ?>
                     <div class="no-items">
-                        <i class="fas fa-coffee" style="font-size: 3rem; margin-bottom: 20px; color: #8B4513;"></i>
+                        <i class="fas fa-coffee" style="font-size: 3rem; margin-bottom: 20px; color: #FF6B6B;"></i>
                         <p>No menu items available at the moment.</p>
                     </div>
                 <?php else: ?>
