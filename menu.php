@@ -270,6 +270,7 @@ $is_guest = !isset($_SESSION['user_id']) && !$is_admin && !$is_staff;
         }
         
         .add-to-cart-btn {
+            font-family: 'Poppins', sans-serif;
             width: 100%;
             padding: 12px;
             background: linear-gradient(135deg, #FF6B6B, #A0522D);

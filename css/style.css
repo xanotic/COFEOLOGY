@@ -112,6 +112,12 @@ img {
   background-color: var(--primary-color);
   color: white;
 }
+.cart-actions {
+  display: flex;
+  gap: 15px; /* or whatever spacing you prefer */
+  margin-top: 20px; 
+}
+
 
 .section-title {
   font-size: 2rem;
