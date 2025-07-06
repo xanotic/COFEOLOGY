@@ -173,9 +173,6 @@ if ($result) {
                     <h1>Orders Management</h1>
                 </div>
                 <div class="header-actions">
-                    <button class="btn btn-primary" onclick="exportOrders()">
-                        <i class="fas fa-download"></i> Export
-                    </button>
                 </div>
             </header>
             
@@ -567,10 +564,6 @@ if ($result) {
             document.getElementById(modalId).style.display = 'none';
         }
         
-        function exportOrders() {
-            const params = new URLSearchParams(window.location.search);
-            window.open('../api/export-orders.php?' + params.toString(), '_blank');
-        }
     </script>
 </body>
 </html>

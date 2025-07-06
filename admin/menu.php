@@ -169,9 +169,6 @@ $stats['categories'] = $result ? $result->fetch_assoc()['total'] : 0;
                     <button class="btn btn-primary" onclick="openAddItemModal()">
                         <i class="fas fa-plus"></i> Add Item
                     </button>
-                    <button class="btn btn-secondary" onclick="exportMenu()">
-                        <i class="fas fa-download"></i> Export
-                    </button>
                 </div>
             </header>
             
@@ -627,9 +624,6 @@ $stats['categories'] = $result ? $result->fetch_assoc()['total'] : 0;
             document.getElementById(modalId).style.display = 'none';
         }
         
-        function exportMenu() {
-            window.open('../api/export-menu.php', '_blank');
-        }
     </script>
 </body>
 </html>

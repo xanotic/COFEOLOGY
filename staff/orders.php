@@ -191,9 +191,6 @@ function getRandomBank() {
                     <button class="btn btn-secondary" onclick="printOrders()">
                         <i class="fas fa-print"></i> Print Orders
                     </button>
-                    <button class="btn btn-info" onclick="window.open('../scripts/check_database_schema.php', '_blank')">
-                        <i class="fas fa-database"></i> Check DB Schema
-                    </button>
                 </div>
             </header>
             
@@ -722,6 +719,31 @@ function getRandomBank() {
             gap: 10px;
             justify-content: flex-end;
             margin-top: 20px;
+        }
+        
+        .filter-form .btn {
+            min-width: 100px;
+            height: 40px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .filter-form .form-control {
+            min-width: 150px;
         }
     </style>
     

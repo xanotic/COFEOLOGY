@@ -321,6 +321,12 @@ if(file_exists('includes/functions.php')) {
                 </h2>
                 <div class="menu-grid" id="popular-items-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 25px; padding: 0 20px;">
                     <?php
+                    // Determine user type - check all possible session variables
+                    $is_admin = isset($_SESSION['admin_id']) || isset($_SESSION['admin_logged_in']) || (isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'admin') || (isset($_SESSION['role']) && $_SESSION['role'] === 'admin');
+                    $is_staff = isset($_SESSION['staff_id']) || isset($_SESSION['staff_logged_in']) || (isset($_SESSION['user_type']) && $_SESSION['user_type'] === 'staff') || (isset($_SESSION['role']) && $_SESSION['role'] === 'staff');
+                    $is_customer = isset($_SESSION['user_id']) && !$is_admin && !$is_staff;
+                    $is_guest = !isset($_SESSION['user_id']) && !$is_admin && !$is_staff;
+                    
                     // Try to load popular items from database
                     if($conn && function_exists('getPopularItems')) {
                         try {
@@ -350,7 +356,26 @@ if(file_exists('includes/functions.php')) {
                                     echo '<div class="item-price" style="font-size: 1.4rem; font-weight: 700; color: #FF6B6B;">RM ' . number_format((float)$itemPrice, 2) . '</div>';
                                     echo '</div>';
                                     echo '<div class="item-actions" style="display: flex; gap: 10px;">';
-                                    echo '<button class="btn btn-primary" style="flex: 1; background: #FF6B6B; border: none; color: white; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.3s; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 14px;" onclick="addToCart(' . (int)$itemId . ', \'' . addslashes($itemName) . '\', ' . (float)$itemPrice . ', \'' . addslashes($itemImage) . '\')">Add to Cart</button>';
+                                    
+                                    // Action buttons based on user type
+                                    if ($is_admin) {
+                                        // Admin - View only
+                                        echo '<div style="flex: 1; text-align: center; padding: 12px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; color: #6c757d; font-size: 14px; display: flex; align-items: center; justify-content: center; height: 44px;">';
+                                        echo '<i class="fas fa-user-shield" style="margin-right: 8px;"></i> Admin View Only';
+                                        echo '</div>';
+                                    } elseif ($is_staff) {
+                                        // Staff - View only
+                                        echo '<div style="flex: 1; text-align: center; padding: 12px; background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; color: #6c757d; font-size: 14px; display: flex; align-items: center; justify-content: center; height: 44px;">';
+                                        echo '<i class="fas fa-user-tie" style="margin-right: 8px;"></i> Staff View Only';
+                                        echo '</div>';
+                                    } elseif ($is_customer) {
+                                        // Customer - Add to cart
+                                        echo '<button class="btn btn-primary" style="flex: 1; background: #FF6B6B; border: none; color: white; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.3s; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 14px;" onclick="addToCart(' . (int)$itemId . ', \'' . addslashes($itemName) . '\', ' . (float)$itemPrice . ', \'' . addslashes($itemImage) . '\')">Add to Cart</button>';
+                                    } else {
+                                        // Guest - Login prompt
+                                        echo '<a href="login.php" class="btn btn-secondary" style="flex: 1; background: transparent; border: 2px solid #FF6B6B; color: #FF6B6B; padding: 12px; border-radius: 8px; font-weight: 600; text-decoration: none; text-align: center; transition: all 0.3s; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 14px;">Login to Order</a>';
+                                    }
+                                    
                                     echo '<button onclick="window.location.href=\'menu.php\'" class="btn btn-secondary" style="flex: 1; background: transparent; border: 2px solid #FF6B6B; color: #FF6B6B; padding: 12px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 14px;">View Menu</button>';
                                     echo '</div>';
                                     echo '</div>';
