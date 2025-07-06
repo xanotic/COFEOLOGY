@@ -115,7 +115,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     
                     <form action="login.php" method="post">
                         <div class="form-group">
-                            <label class="form-label">Login As</label>
+                            <label class="form-label">Log In As</label>
                             <div style="display: flex; gap: 20px; align-items: center; margin-bottom: 10px;">
                                 <label class="user-type-method">
                                     <input type="radio" id="user_type_customer" name="user_type" value="customer" class="form-check-input" <?php if(isset($_POST['user_type']) && $_POST['user_type'] === 'customer') echo 'checked'; ?>>
@@ -166,7 +166,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <div class="form-group">
                             <label for="email" class="form-label">Email Address</label>
                             <input type="text" id="email" name="email" class="form-control" value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>" required>
-                            <div class="form-text">For admin login, you can use username or email</div>
+                            <div class="form-text">For admin log in, you can use username or email</div>
                         </div>
                         
                         <div class="form-group">
@@ -185,7 +185,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         </div>
                         
                         <div class="form-actions">
-                            <button type="submit" class="btn btn-primary">Login</button>
+                            <button type="submit" class="btn btn-primary">Log In</button>
                         </div>
                         
                         <div class="form-footer">

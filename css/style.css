@@ -488,6 +488,9 @@ img {
 
 .form-actions {
   margin-top: 30px;
+   display: flex;
+   flex-wrap: wrap;
+   gap: 15px;
 }
 
 .form-actions .btn {

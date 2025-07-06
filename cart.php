@@ -38,7 +38,7 @@ $canCheckout = isLoggedIn();
                     <?php if ($canCheckout): ?>
                         <button class="btn btn-primary" onclick="proceedToCheckout()">Proceed to Checkout</button>
                     <?php else: ?>
-                        <a href="login.php" class="btn btn-primary">Login to Checkout</a>
+                        <a href="login.php" class="btn btn-primary">Log In to Checkout</a>
                     <?php endif; ?>
                 </div>
             </div>

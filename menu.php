@@ -273,7 +273,7 @@ $is_guest = !isset($_SESSION['user_id']) && !$is_admin && !$is_staff;
             font-family: 'Poppins', sans-serif;
             width: 100%;
             padding: 12px;
-            background: linear-gradient(135deg, #FF6B6B, #A0522D);
+            background: #FF6B6B;
             color: white;
             border: none;
             border-radius: 8px;
