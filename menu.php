@@ -457,7 +457,7 @@ $is_guest = !isset($_SESSION['user_id']) && !$is_admin && !$is_staff;
                                                 <?php else: ?>
                                                     <!-- Guest - Login prompt -->
                                                     <a href="login.php" class="btn btn-secondary">
-                                                        <i class="fas fa-sign-in-alt"></i> Login to Order
+                                                        <i class="fas fa-sign-in-alt"></i> Log In to Order
                                                     </a>
                                                 <?php endif; ?>
                                             </div>
