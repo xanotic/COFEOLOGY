@@ -2,8 +2,8 @@
     <div class="container">
         <div class="footer-content">
             <div class="footer-section">
-                <h3>Cofeology Cafe</h3>
-                <p>Enjoy delicious meals delivered to your doorstep or ready for pickup.</p>
+                <h3>Cofeology Café & Restaurant</h3>
+                <p>Cofeology Café & Restaurant is founded on the spirit to bring out the best of local produce has to offer. Its unique dishes with high standards of quality and freshness did not come with a hefty price tag.</p>
             </div>
             <div class="footer-section">
                 <h3>Contact Us</h3>
