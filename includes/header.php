@@ -17,10 +17,10 @@ $is_staff = isset($_SESSION['staff_id']) || isset($_SESSION['staff_logged_in']) 
                     <li><a href="menu.php">Menu</a></li>
                     <?php if(isLoggedIn()): ?>
                         <li><a href="my-orders.php">My Orders</a></li>
-                        <?php if(isStaff()): ?>
+                        <?php if($is_staff && !$is_admin): ?>
                             <li><a href="staff/dashboard.php">Staff Dashboard</a></li>
                         <?php endif; ?>
-                        <?php if(isAdmin()): ?>
+                        <?php if($is_admin): ?>
                             <li><a href="admin/dashboard.php">Admin Dashboard</a></li>
                         <?php endif; ?>
                     <?php endif; ?>
