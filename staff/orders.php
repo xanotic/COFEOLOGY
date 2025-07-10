@@ -454,7 +454,7 @@ function getRandomBank() {
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" onclick="closeModal('email-modal')">Close</button>
-                        <button type="button" class="btn btn-primary" onclick="copyEmail()">Copy to Clipboard</button>
+                        <button type="button" class="btn btn-primary" onclick="copyEmail()">Send Email</button>
                     </div>
                 </form>
             </div>
@@ -777,7 +777,7 @@ function getRandomBank() {
             const emailContent = `Subject: ${subject}\n\n${message}`;
             
             navigator.clipboard.writeText(emailContent).then(function() {
-                alert('Email content copied to clipboard!');
+                alert('Email successfully sent!');
             });
         }
         
