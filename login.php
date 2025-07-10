@@ -201,6 +201,35 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     
     <script src="js/main.js"></script>
     <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        main {
+            flex: 1 0 auto;
+            padding-bottom: 32px;
+        }
+        .site-footer, footer.site-footer {
+            background: #2d3436;
+            color: #fff;
+            padding: 40px 0 20px;
+            margin-top: 0;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+        .site-footer .footer-bottom, footer.site-footer .footer-bottom {
+            text-align: center;
+            padding-top: 16px;
+            font-size: 0.95rem;
+            color: #ccc;
+        }
+        .site-footer .footer-content, footer.site-footer .footer-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 0;
+        }
         .demo-accounts {
             margin-top: 30px;
             padding: 20px;

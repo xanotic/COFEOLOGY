@@ -306,9 +306,6 @@ if ($result) {
                                             <td>
                                                 <div class="table-actions">
                                                     
-                                                    <button class="btn-icon" onclick="updateStatus(<?php echo $order['ORDER_ID']; ?>, '<?php echo $order['ORDER_STATUS']; ?>')" title="Update Status">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
                                                     <button class="btn-icon" onclick="assignStaff(<?php echo $order['ORDER_ID']; ?>)" title="Assign Staff">
                                                         <i class="fas fa-user-plus"></i>
                                                     </button>

@@ -23,38 +23,24 @@ function formatCurrency($amount) {
 
 function getPopularItems($conn, $limit = 4) {
     $items = [];
-    
-    // Check if tables exist first
-    $result = $conn->query("SHOW TABLES LIKE 'MENU_ITEM'");
-    if($result->num_rows == 0) {
-        return $items;
-    }
-    
-    $sql = "SELECT ITEM_ID as id, MENU_ITEM_ID as menu_item_id, ITEM_NAME as name, ITEM_DESCRIPTION as description, ITEM_PRICE as price, ITEM_CATEGORY as category, STOCK_LEVEL, image FROM MENU_ITEM WHERE active = 1 ORDER BY STOCK_LEVEL DESC LIMIT ?";
-    $stmt = $conn->prepare($sql);
-    
-    if($stmt) {
+    // You can adjust the ORDER BY clause to match your definition of "popular"
+    $sql = "SELECT * FROM menu_item WHERE active = 1 ORDER BY STOCK_LEVEL DESC, ITEM_ID DESC LIMIT ?";
+    if ($stmt = $conn->prepare($sql)) {
         $stmt->bind_param("i", $limit);
         $stmt->execute();
         $result = $stmt->get_result();
-        
         while ($row = $result->fetch_assoc()) {
-            // Ensure all required fields have default values
-            $item = [
-                'id' => $row['id'] ?? 0,
-                'menu_item_id' => $row['menu_item_id'] ?? 'MI#0',
-                'name' => $row['name'] ?? 'Unknown Item',
-                'description' => $row['description'] ?? 'No description available',
-                'price' => $row['price'] ?? 0.00,
-                'category' => $row['category'] ?? 'general',
-                'STOCK_LEVEL' => $row['STOCK_LEVEL'] ?? 0,
-                'image' => !empty($row['image']) ? $row['image'] : 'https://via.placeholder.com/280x200/ff6b6b/ffffff?text=' . urlencode($row['name'] ?? 'Item')
+            $items[] = [
+                'id' => $row['ITEM_ID'],
+                'name' => $row['ITEM_NAME'],
+                'description' => $row['ITEM_DESCRIPTION'],
+                'price' => $row['ITEM_PRICE'],
+                'image' => $row['image'],
+                'status' => $row['active']
             ];
-            $items[] = $item;
         }
         $stmt->close();
     }
-    
     return $items;
 }
 

@@ -26,7 +26,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 
                 $stmt = $conn->prepare("INSERT INTO menu_item (ITEM_NAME, ITEM_PRICE, ITEM_DESCRIPTION, ITEM_CATEGORY, STOCK_LEVEL, image, active) VALUES (?, ?, ?, ?, ?, ?, 1)");
                 if ($stmt) {
-                    $stmt->bind_param("sdssiss", $name, $price, $description, $category, $stock, $image);
+                    $stmt->bind_param("sdssis", $name, $price, $description, $category, $stock, $image);
                     if ($stmt->execute()) {
                         $message = "Menu item added successfully!";
                     } else {

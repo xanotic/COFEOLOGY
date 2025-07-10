@@ -31,6 +31,8 @@ function getCustomerData($order, $field_type) {
         case 'phone':
             return $order['CUST_NPHONE'] ?? $order['CUST_PHONE'] ?? $order['CUSTOMER_PHONE'] ?? 'N/A';
         case 'address':
+            // If delivery address exists in order, use it
+            if (!empty($order['DELIVERY_ADDRESS'])) return $order['DELIVERY_ADDRESS'];
             return $order['CUST_ADDRESS'] ?? $order['CUST_ADD'] ?? $order['CUSTOMER_ADDRESS'] ?? 'N/A';
         case 'membership':
             return $order['MEMBERSHIP_TYPE'] ?? $order['CUST_MEMBERSHIP'] ?? 'Basic';
@@ -329,7 +331,12 @@ function getRandomBank() {
                                             <?php if (($order['ORDER_TYPE'] ?? '') === 'delivery'): ?>
                                             <div class="info-item full-width">
                                                 <span class="label">Address:</span>
-                                                <span class="value"><?php echo htmlspecialchars(getCustomerData($order, 'address')); ?></span>
+                                                <span class="value">
+                                                    <?php
+                                                    // Prefer delivery address from order if available
+                                                    echo htmlspecialchars($order['DELIVERY_ADDRESS'] ?? getCustomerData($order, 'address'));
+                                                    ?>
+                                                </span>
                                             </div>
                                             <?php endif; ?>
                                             <div class="info-item">
