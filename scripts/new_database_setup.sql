@@ -495,7 +495,10 @@ INSERT INTO `staff` (`STAFF_ID`, `STAFF_NUMBER`, `STAFF_NAME`, `STAFF_PNUMBER`, 
 --
 DROP TABLE IF EXISTS `order_summary`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `order_summary`  AS SELECT `o`.`ORDER_ID` AS `ORDER_ID`, `o`.`ORDER_NUMBER` AS `ORDER_NUMBER`, `o`.`ORDER_TIME` AS `ORDER_TIME`, `o`.`ORDER_DATE` AS `ORDER_DATE`, `o`.`ORDER_TYPE` AS `ORDER_TYPE`, `o`.`ORDER_STATUS` AS `ORDER_STATUS`, `o`.`TOT_AMOUNT` AS `TOT_AMOUNT`, `o`.`DELIVERY_ADDRESS` AS `DELIVERY_ADDRESS`, `o`.`PAYMENT_METHOD` AS `PAYMENT_METHOD`, `o`.`PAYMENT_STATUS` AS `PAYMENT_STATUS`, `c`.`CUST_NAME` AS `customer_name`, `c`.`CUST_EMAIL` AS `customer_email`, `c`.`CUST_NPHONE` AS `customer_phone`, `s`.`STAFF_NAME` AS `staff_name`, count(`ol`.`LISTING_ID`) AS `item_count` FROM (((`order` `o` join `customer` `c` on(`o`.`CUST_ID` = `c`.`CUST_ID`)) left join `staff` `s` on(`o`.`STAFF_ID` = `s`.`STAFF_ID`)) left join `order_listing` `ol` on(`o`.`ORDER_ID` = `ol`.`ORDER_ID`)) GROUP BY `o`.`ORDER_ID` ;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `order_summary`  AS SELECT `o`.`ORDER_ID` AS `ORDER_ID`, `o`.`ORDER_NUMBER` AS `ORDER_NUMBER`, `o`.`ORDER_TIME` AS `ORDER_TIME`, `o`.`ORDER_DATE` AS `ORDER_DATE`, 
+`o`.`ORDER_TYPE` AS `ORDER_TYPE`, `o`.`ORDER_STATUS` AS `ORDER_STATUS`, `o`.`TOT_AMOUNT` AS `TOT_AMOUNT`, `o`.`DELIVERY_ADDRESS` AS `DELIVERY_ADDRESS`, `o`.`PAYMENT_METHOD` AS `PAYMENT_METHOD`, `o`.`PAYMENT_STATUS` AS `PAYMENT_STATUS`, 
+`c`.`CUST_NAME` AS `customer_name`, `c`.`CUST_EMAIL` AS `customer_email`, `c`.`CUST_NPHONE` AS `customer_phone`, `s`.`STAFF_NAME` AS `staff_name`, count(`ol`.`LISTING_ID`) AS `item_count` 
+FROM (((`order` `o` join `customer` `c` on(`o`.`CUST_ID` = `c`.`CUST_ID`)) left join `staff` `s` on(`o`.`STAFF_ID` = `s`.`STAFF_ID`)) left join `order_listing` `ol` on(`o`.`ORDER_ID` = `ol`.`ORDER_ID`)) GROUP BY `o`.`ORDER_ID` ;
 
 -- --------------------------------------------------------
 
@@ -504,7 +507,10 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 DROP TABLE IF EXISTS `popular_items`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `popular_items`  AS SELECT `mi`.`ITEM_ID` AS `ITEM_ID`, `mi`.`MENU_ITEM_ID` AS `MENU_ITEM_ID`, `mi`.`ITEM_NAME` AS `ITEM_NAME`, `mi`.`ITEM_DESCRIPTION` AS `ITEM_DESCRIPTION`, `mi`.`ITEM_PRICE` AS `ITEM_PRICE`, `mi`.`ITEM_CATEGORY` AS `ITEM_CATEGORY`, `mi`.`image` AS `image`, `mi`.`STOCK_LEVEL` AS `STOCK_LEVEL`, count(`ol`.`LISTING_ID`) AS `order_count`, sum(`ol`.`ORDER_QUANTITY`) AS `total_quantity` FROM (`menu_item` `mi` left join `order_listing` `ol` on(`mi`.`ITEM_ID` = `ol`.`ITEM_ID`)) WHERE `mi`.`active` = 1 GROUP BY `mi`.`ITEM_ID` ORDER BY count(`ol`.`LISTING_ID`) DESC, sum(`ol`.`ORDER_QUANTITY`) DESC ;
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `popular_items`  AS SELECT `mi`.`ITEM_ID` AS `ITEM_ID`, `mi`.`MENU_ITEM_ID` AS `MENU_ITEM_ID`, 
+`mi`.`ITEM_NAME` AS `ITEM_NAME`, `mi`.`ITEM_DESCRIPTION` AS `ITEM_DESCRIPTION`, `mi`.`ITEM_PRICE` AS `ITEM_PRICE`, `mi`.`ITEM_CATEGORY` AS `ITEM_CATEGORY`, `mi`.`image` AS `image`, 
+`mi`.`STOCK_LEVEL` AS `STOCK_LEVEL`, count(`ol`.`LISTING_ID`) AS `order_count`, sum(`ol`.`ORDER_QUANTITY`) AS `total_quantity` FROM (`menu_item` `mi` left join `order_listing` `ol` on(`mi`.`ITEM_ID` = `ol`.`ITEM_ID`)) WHERE `mi`.`active` = 1 GROUP BY `mi`.`ITEM_ID` ORDER BY count(`ol`.`LISTING_ID`) DESC, 
+sum(`ol`.`ORDER_QUANTITY`) DESC ;
 
 --
 -- Indexes for dumped tables
